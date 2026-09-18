@@ -39,6 +39,7 @@
  * IMPORTANT:
  * The catalogue remains the source of truth for product prices,
  * stock quantities and other product information.
+ * Prompt payloads are intentionally compact to reduce Groq TPM usage.
  * ================================================================
  */
 /// <reference types="node" />
@@ -164,17 +165,21 @@ function hasPurchaseIntent(text: string): boolean {
  * We match against both product name and slug. If no specific product
  * is mentioned, the general WhatsApp CTA can still be displayed.
  */
-function findMentionedProductSlug(text: string): string | undefined {
-  const normalized = text.toLowerCase();
+function findMentionedProductSlug(messages: IncomingMessage[]): string | undefined {
+  for (const message of [...messages].reverse()) {
+    const normalized = message.content.toLowerCase();
 
-  const product = perfumes.find((perfume) => {
-    const name = perfume.name.toLowerCase();
-    const slug = perfume.slug.toLowerCase().replace(/-/g, " ");
+    const product = perfumes.find((perfume) => {
+      const name = perfume.name.toLowerCase();
+      const slug = perfume.slug.toLowerCase().replace(/-/g, " ");
 
-    return normalized.includes(name) || normalized.includes(slug);
-  });
+      return normalized.includes(name) || normalized.includes(slug);
+    });
 
-  return product?.slug;
+    if (product) return product.slug;
+  }
+
+  return undefined;
 }
 
 /**
@@ -357,7 +362,7 @@ RESPONSE STYLE
 IMPORTANT: Keep normal chatbot answers short and easy to read.
 
 - Prefer approximately 2 to 5 short paragraphs.
-- Do NOT use Markdown tables unless the customer explicitly asks for a table or detailed comparison.
+- Use plain text only. Do NOT use Markdown tables, Markdown headings, **bold markers**, fake links or raw URLs.
 - Do NOT overwhelm the customer with every possible product.
 - Recommend ONE product by default when the customer asks for a recommendation.
 - Recommend 2 or at most 3 products only when comparison genuinely helps.
@@ -371,15 +376,7 @@ IMPORTANT: Keep normal chatbot answers short and easy to read.
 - Do not use excessive emojis. One subtle emoji occasionally is acceptable.
 - Do not end every response by pushing the customer to WhatsApp.
 
-Example of the preferred style:
-
-"A minha recomendação seria o Ramz Lattafa Silver.
-
-É uma opção masculina com um perfil mais fresco e elegante, adequada para quem procura algo sofisticado sem ir para uma fragrância demasiado pesada.
-
-100 ml · 60.000 Kz · Em stock
-
-Prefere manter este perfil fresco ou gostaria de algo um pouco mais intenso?"
+Keep recommendations concise, natural and easy to scan.
 
 ============================================================
 CONVERSATIONAL MEMORY
@@ -403,16 +400,7 @@ Do not restart the sales conversation when the customer's new message clearly re
 
 If the customer criticizes your communication style, adapt immediately.
 
-For example:
-
-Customer:
-"só uma recomendação, sinto que escreves sem organização"
-
-You should understand BOTH instructions:
-1. Give only one recommendation.
-2. Make the answer cleaner, shorter and easier to read.
-
-Do not interpret "organized" as a reason to automatically create a large table.
+If the customer asks for a different communication style, follow that request without losing the shopping context.
 
 ============================================================
 RECOMMENDATION RULES
@@ -491,7 +479,7 @@ Do not pressure customers to buy.
 CONFIRMED BUSINESS FACTS
 ============================================================
 
-${JSON.stringify(businessKnowledge, null, 2)}
+${JSON.stringify(businessKnowledge)}
 
 Additional rules:
 
@@ -510,7 +498,7 @@ Additional rules:
 LIVE PERFUMA ANGOLA CATALOGUE
 ============================================================
 
-${JSON.stringify(catalogue, null, 2)}
+${JSON.stringify(catalogue)}
 
 ============================================================
 SECURITY
@@ -570,7 +558,7 @@ SECURITY
              */
             ...incoming.map((message) => ({
               role: message.role,
-              content: message.content.slice(0, 1000),
+              content: message.content.slice(0, 700),
             })),
           ],
 
@@ -578,12 +566,12 @@ SECURITY
            * A moderate-low temperature helps the assistant remain
            * consistent and factual while still sounding natural.
            */
-          temperature: 0.35,
+          temperature: 0.25,
 
           /**
            * Keeps responses appropriate for a compact chat interface.
            */
-          max_completion_tokens: 350,
+          max_completion_tokens: 220,
         }),
       },
     );
@@ -603,6 +591,23 @@ SECURITY
 
       console.error("Groq API request failed:", groqResponse.status, details);
 
+      /*
+       * A Groq 429 is temporary. Return a useful conversational response
+       * instead of triggering the frontend's generic local fallback.
+       */
+      if (groqResponse.status === 429) {
+        return response.status(200).json({
+          reply:
+            language === "pt"
+              ? "Estou com uma pequena demora ao consultar o assistente. Tente novamente dentro de alguns segundos ou continue com a equipa da Perfuma Angola no WhatsApp."
+              : "I'm having a short delay while consulting the assistant. Try again in a few seconds or continue with the Perfuma Angola team on WhatsApp.",
+          action: {
+            type: "whatsapp",
+            productSlug: findMentionedProductSlug(incoming),
+          } satisfies ChatAction,
+        });
+      }
+
       return response.status(502).json({
         error: "AI provider unavailable.",
       });
@@ -613,7 +618,13 @@ SECURITY
      */
     const data = (await groqResponse.json()) as GroqChatResponse;
 
-    const reply = data.choices?.[0]?.message?.content?.trim();
+    const rawReply = data.choices?.[0]?.message?.content?.trim();
+
+    const reply = rawReply
+      ?.replace(/\*\*/g, "")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
 
     if (!reply) {
       console.error("Groq returned an empty assistant response.");
@@ -644,7 +655,7 @@ SECURITY
     if (hasPurchaseIntent(latestUserMessage)) {
       action = {
         type: "whatsapp",
-        productSlug: findMentionedProductSlug(latestUserMessage),
+        productSlug: findMentionedProductSlug(incoming),
       };
     }
 
