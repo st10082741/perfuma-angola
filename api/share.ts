@@ -1,4 +1,4 @@
-import { perfumes } from "../src/data/perfumes";
+import { perfumes } from "../src/data/perfumes.js";
 
 function escapeHtml(value: string) {
   return value.replace(

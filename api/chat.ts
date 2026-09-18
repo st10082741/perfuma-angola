@@ -1,5 +1,5 @@
-import { perfumes } from "../src/data/perfumes";
-import { businessKnowledge } from "../src/data/businessKnowledge";
+import { perfumes } from "../src/data/perfumes.js";
+import { businessKnowledge } from "../src/data/businessKnowledge.js";
 
 /**
  * =========================================================
