@@ -1,6 +1,22 @@
 /**
- * =========================================================
+ * ================================================================
  * PERFUMA ANGOLA — BUSINESS CONFIGURATION
+ * ================================================================
+ *
+ * Language: TypeScript
+ *
+ * PURPOSE:
+ * This file is the centralized configuration for business-wide
+ * information used throughout the Perfuma Angola application.
+ *
+ * Instead of repeating values such as the WhatsApp number, currency,
+ * owners or delivery day across many components, those values are
+ * defined once here and imported wherever they are needed.
+ *
+ * BENEFIT:
+ * If business information changes later, we normally update it here
+ * instead of searching through the entire application.
+ * ================================================================
  * =========================================================
  * Edit business-wide information here. Components import this object so the
  * WhatsApp number, currency and brand identity are never duplicated in code.

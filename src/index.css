@@ -1,3 +1,34 @@
+/**
+ * ================================================================
+ * PERFUMA ANGOLA — GLOBAL WEBSITE STYLES
+ * ================================================================
+ *
+ * Language: CSS (Cascading Style Sheets)
+ *
+ * PURPOSE:
+ * This stylesheet controls the visual presentation of the complete
+ * Perfuma Angola website.
+ *
+ * It contains the website's:
+ * - design system and luxury colour palette;
+ * - typography;
+ * - navigation;
+ * - buttons;
+ * - homepage;
+ * - perfume catalogue;
+ * - product details;
+ * - About and Contact pages;
+ * - footer;
+ * - AI chatbot;
+ * - responsive/mobile behaviour.
+ *
+ * LEARNING NOTE:
+ * React/TSX determines WHAT elements appear on the page.
+ * CSS determines HOW those elements look, move and adapt to different
+ * screen sizes.
+ * ================================================================
+ */
+
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,500&display=swap");
 
 /* =========================================================
@@ -798,166 +829,557 @@ footer small {
   color: #777;
 }
 
-/* =========================================================
-   12. AI CHATBOT
-   A compact sales assistant. API logic lives in /api/chat.ts.
-   ========================================================= */
+/* ================================================================
+   12. AI CHATBOT — LUXURY SALES ASSISTANT
+   ================================================================
+
+   Language: CSS (Cascading Style Sheets)
+
+   PURPOSE:
+   This section controls the visual design of the Perfuma Angola
+   AI sales assistant.
+
+   The chatbot uses the same cream, black and gold visual identity
+   as the rest of the website so it feels like part of the Perfuma
+   Angola brand rather than an external third-party widget.
+
+   RELATED FILES:
+   - Chat interface: src/components/chat/Chatbot.tsx
+   - AI server logic: api/chat.ts
+   - WhatsApp logic: src/utils/whatsapp.ts
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   12.1 CHATBOT POSITION
+   Keeps the complete assistant fixed in the bottom-right corner.
+   ---------------------------------------------------------------- */
 .chatbot {
   position: fixed;
   right: 22px;
   bottom: 22px;
   z-index: 80;
 }
+
+/* ----------------------------------------------------------------
+   12.2 FLOATING CHAT LAUNCHER
+   This is the button customers use to open and close the assistant.
+   ---------------------------------------------------------------- */
 .chat-launcher {
   min-height: 52px;
+
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 9px;
+
   margin-left: auto;
   padding: 0 17px;
-  border: 0;
+
+  border: 1px solid rgba(169, 135, 80, 0.24);
   border-radius: 999px;
+
   background: var(--ink);
   color: #fff;
+
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.22);
+
   cursor: pointer;
-}
-.chat-launcher span {
-  font-size: 12px;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
 }
 
+.chat-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.27);
+}
+
+.chat-launcher span {
+  font-size: 12px;
+  letter-spacing: 0.15px;
+}
+
+/* ----------------------------------------------------------------
+   12.3 CHAT WINDOW
+   The panel has a desktop maximum size but automatically adapts
+   when the browser window becomes smaller.
+   ---------------------------------------------------------------- */
 .chat-panel {
-  width: min(390px, calc(100vw - 28px));
-  height: min(610px, calc(100vh - 105px));
+  width: min(400px, calc(100vw - 28px));
+  height: min(640px, calc(100vh - 105px));
+
   display: flex;
   flex-direction: column;
+
   margin-bottom: 12px;
+
   overflow: hidden;
+
   border: 1px solid rgba(169, 135, 80, 0.3);
+
   background: #fffdf9;
+
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
 }
 
+/* ----------------------------------------------------------------
+   12.4 CHAT HEADER
+   Displays the assistant identity, status and close button.
+   ---------------------------------------------------------------- */
 .chat-header {
   display: flex;
   align-items: center;
   gap: 11px;
+
+  flex: 0 0 auto;
+
   padding: 15px 16px;
+
   background: #171714;
   color: #fff;
+
+  border-bottom: 1px solid rgba(169, 135, 80, 0.24);
 }
+
+/*
+ * Circular gold icon representing the Perfuma Angola assistant.
+ */
 .chat-avatar {
   width: 36px;
   height: 36px;
+
   display: grid;
   place-items: center;
+
+  flex: 0 0 36px;
+
   border-radius: 50%;
+
   background: var(--gold);
+  color: #fff;
 }
+
+/*
+ * The second div inside the header contains the assistant name
+ * and its status text.
+ */
 .chat-header div:nth-child(2) {
   display: flex;
   flex-direction: column;
+
   flex: 1;
+
+  min-width: 0;
 }
+
 .chat-header strong {
   font:
     17px "Playfair Display",
     serif;
 }
+
 .chat-header span {
   margin-top: 2px;
+
   color: #bbb;
+
   font-size: 10px;
 }
+
+/*
+ * Close button.
+ * The transparent design keeps the header visually clean.
+ */
 .chat-header button {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  flex: 0 0 34px;
+
+  padding: 0;
+
   border: 0;
+  border-radius: 50%;
+
   background: transparent;
   color: #fff;
+
   cursor: pointer;
+
+  transition: background 0.2s ease;
 }
 
+.chat-header button:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* ----------------------------------------------------------------
+   12.5 CONVERSATION AREA
+   This is the scrollable area containing customer and AI messages.
+   ---------------------------------------------------------------- */
 .chat-messages {
   flex: 1;
+
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
+
+  /*
+   * min-height: 0 is important inside a flex container.
+   * It allows this area to shrink correctly and become scrollable.
+   */
+  min-height: 0;
+
   padding: 16px;
+
   overflow-y: auto;
-  background: linear-gradient(#faf6ef, #f5efe6);
+
+  /*
+   * Prevents scrolling inside the chatbot from unnecessarily
+   * propagating into the page behind it.
+   */
+  overscroll-behavior: contain;
+
+  background: linear-gradient(180deg, #faf6ef 0%, #f5efe6 100%);
 }
+
+/*
+ * Subtle custom scrollbar for browsers based on WebKit/Chromium.
+ */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(125, 98, 57, 0.24);
+}
+
+/* ----------------------------------------------------------------
+   12.6 MESSAGE CONTAINERS
+   Assistant messages align left while customer messages align right.
+   ---------------------------------------------------------------- */
 .chat-message {
-  max-width: 86%;
+  max-width: 88%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
-.chat-message p {
-  margin: 0;
-  padding: 11px 13px;
-  border-radius: 13px;
-  font-size: 12px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-}
+
 .chat-message.assistant {
   align-self: flex-start;
 }
-.chat-message.assistant p {
-  background: #fff;
-  border: 1px solid #e4dbce;
-  border-bottom-left-radius: 3px;
-}
+
 .chat-message.user {
   align-self: flex-end;
 }
-.chat-message.user p {
-  background: #1b1b18;
-  color: #fff;
-  border-bottom-right-radius: 3px;
-}
-.chat-thinking {
-  opacity: 0.62;
+
+/* ----------------------------------------------------------------
+   12.7 MESSAGE BUBBLES
+
+   Chatbot.tsx separates the complete message container from the
+   visible bubble.
+
+   This is important because an assistant response may now contain:
+   1. the normal AI message;
+   2. a WhatsApp action button underneath it.
+   ---------------------------------------------------------------- */
+.chat-message-bubble {
+  min-width: 0;
 }
 
+.chat-message-bubble p {
+  margin: 0;
+
+  padding: 11px 13px;
+
+  border-radius: 13px;
+
+  font-size: 12px;
+  line-height: 1.6;
+
+  /*
+   * AI messages may contain intentional line breaks.
+   * pre-wrap preserves them without injecting HTML.
+   */
+  white-space: pre-wrap;
+
+  /*
+   * Prevents unusually long text or URLs from breaking the layout.
+   */
+  overflow-wrap: anywhere;
+}
+
+/*
+ * Assistant message appearance.
+ */
+.chat-message.assistant .chat-message-bubble p {
+  border: 1px solid #e4dbce;
+  border-bottom-left-radius: 3px;
+
+  background: #fff;
+  color: var(--ink);
+
+  box-shadow: 0 4px 14px rgba(36, 28, 16, 0.035);
+}
+
+/*
+ * Customer message appearance.
+ */
+.chat-message.user .chat-message-bubble p {
+  border-bottom-right-radius: 3px;
+
+  background: #1b1b18;
+  color: #fff;
+}
+
+/* ----------------------------------------------------------------
+   12.8 AI THINKING STATE
+   Displayed while React waits for /api/chat to return an answer.
+   ---------------------------------------------------------------- */
+.chat-thinking {
+  opacity: 0.62;
+  font-style: italic;
+}
+
+/* ----------------------------------------------------------------
+   12.9 WHATSAPP SALES CALL-TO-ACTION
+   ----------------------------------------------------------------
+
+   This button appears when the backend detects meaningful purchase
+   intent.
+
+   IMPORTANT ARCHITECTURE:
+   The AI does not manufacture the WhatsApp URL.
+
+   api/chat.ts
+       ↓
+   sends an action
+       ↓
+   Chatbot.tsx
+       ↓
+   whatsapp.ts creates the trusted wa.me URL.
+
+   DESIGN:
+   We intentionally use Perfuma Angola gold instead of making the
+   entire button bright WhatsApp green. This preserves the luxury
+   identity while the icon/text clearly identifies WhatsApp.
+   ---------------------------------------------------------------- */
+.chat-whatsapp-action {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 10px 12px;
+
+  border: 1px solid var(--gold);
+  border-radius: 9px;
+
+  background: var(--gold);
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+
+  text-decoration: none;
+
+  box-shadow: 0 8px 20px rgba(169, 135, 80, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.chat-whatsapp-action:hover {
+  transform: translateY(-1px);
+
+  background: var(--gold-deep);
+  border-color: var(--gold-deep);
+
+  box-shadow: 0 10px 24px rgba(125, 98, 57, 0.24);
+}
+
+/*
+ * Keeps the external-link icon slightly quieter than the main label.
+ */
+.chat-whatsapp-action svg:last-child {
+  opacity: 0.72;
+}
+
+/* ----------------------------------------------------------------
+   12.10 AUTO-SCROLL ANCHOR
+   ----------------------------------------------------------------
+
+   This invisible element sits at the bottom of the conversation.
+
+   React scrolls to it when a new message appears, keeping the latest
+   customer/assistant response visible automatically.
+   ---------------------------------------------------------------- */
+.chat-scroll-anchor {
+  width: 1px;
+  height: 1px;
+
+  flex: 0 0 1px;
+}
+
+/* ----------------------------------------------------------------
+   12.11 QUICK QUESTIONS
+   ----------------------------------------------------------------
+
+   Quick questions help customers begin a conversation without having
+   to know exactly what they should type.
+
+   Horizontal scrolling prevents the buttons from making the chatbot
+   wider than necessary.
+   ---------------------------------------------------------------- */
 .chat-quick-actions {
   display: flex;
   gap: 6px;
-  padding: 10px 12px 0;
-  overflow-x: auto;
-  background: #fffdf9;
-}
-.chat-quick-actions button {
+
   flex: 0 0 auto;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: transparent;
-  font-size: 9px;
-  cursor: pointer;
+
+  padding: 10px 12px 0;
+
+  overflow-x: auto;
+
+  /*
+   * Firefox scrollbar hiding.
+   */
+  scrollbar-width: none;
+
+  background: #fffdf9;
+
+  border-top: 1px solid rgba(217, 208, 194, 0.45);
 }
 
+/*
+ * Chromium/Safari scrollbar hiding.
+ */
+.chat-quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-quick-actions button {
+  flex: 0 0 auto;
+
+  padding: 7px 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+
+  background: transparent;
+  color: var(--ink);
+
+  font-size: 9px;
+  line-height: 1.3;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.chat-quick-actions button:hover {
+  border-color: var(--gold);
+
+  background: rgba(169, 135, 80, 0.07);
+}
+
+.chat-quick-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ----------------------------------------------------------------
+   12.12 MESSAGE INPUT
+   ----------------------------------------------------------------
+
+   CSS Grid gives most of the available width to the text input while
+   reserving a consistent square area for the Send button.
+   ---------------------------------------------------------------- */
 .chat-form {
   display: grid;
-  grid-template-columns: 1fr 42px;
+  grid-template-columns: minmax(0, 1fr) 42px;
   gap: 8px;
+
+  flex: 0 0 auto;
+
   padding: 12px;
+
   background: #fffdf9;
 }
+
 .chat-form input {
   min-width: 0;
+
   padding: 11px 12px;
+
   border: 1px solid var(--line);
+
   background: #fff;
+  color: var(--ink);
+
   outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
+
+.chat-form input::placeholder {
+  color: #969087;
+}
+
 .chat-form input:focus {
   border-color: var(--gold);
+
+  box-shadow: 0 0 0 3px rgba(169, 135, 80, 0.1);
 }
+
+.chat-form input:disabled {
+  opacity: 0.68;
+}
+
+/*
+ * Send button.
+ */
 .chat-form button {
   display: grid;
   place-items: center;
+
   border: 0;
+
   background: var(--gold);
   color: #fff;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
+
+.chat-form button:hover:not(:disabled) {
+  background: var(--gold-deep);
+}
+
 .chat-form button:disabled {
   opacity: 0.4;
   cursor: default;

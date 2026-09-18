@@ -1,11 +1,24 @@
 /**
- * Central catalogue types for Perfuma Angola.
+ * ================================================================
+ * PERFUMA ANGOLA — PERFUME DATA TYPES
+ * ================================================================
  *
- * WHY THIS FILE EXISTS:
- * Every product card, detail page, stock badge, WhatsApp message and chatbot
- * reads the same product shape. If we add a field here, TypeScript warns us
- * everywhere that needs to understand the new field.
+ * Language: TypeScript
+ *
+ * PURPOSE:
+ * This file describes the required structure of perfume catalogue
+ * data used throughout the application.
+ *
+ * TypeScript interfaces do not create database tables.
+ * Instead, they help developers and the compiler understand what
+ * information every perfume is expected to contain.
+ *
+ * Product cards, detail pages, inventory logic, WhatsApp utilities
+ * and the AI assistant can therefore work with one consistent
+ * product structure.
+ * ================================================================
  */
+
 export type Category = "Men" | "Women" | "Unisex";
 
 export interface LocalizedText {
