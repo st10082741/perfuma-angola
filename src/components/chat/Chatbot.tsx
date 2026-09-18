@@ -167,6 +167,27 @@ export function Chatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   /**
+   * References the horizontal quick-question strip.
+   *
+   * Mobile visitors can swipe it naturally. On desktop, the pointer-drag
+   * handlers below let customers click-and-drag left/right when the
+   * suggestions extend beyond the visible chatbot width.
+   */
+  const quickActionsRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Pointer-drag state is stored in a ref rather than React state because
+   * scrolling should remain smooth without causing a component re-render
+   * for every pixel of pointer movement.
+   */
+  const quickDragRef = useRef({
+    active: false,
+    startX: 0,
+    startScrollLeft: 0,
+    moved: false,
+  });
+
+  /**
    * ================================================================
    * LANGUAGE SYNC FOR THE WELCOME MESSAGE
    * ================================================================
@@ -240,6 +261,54 @@ export function Chatbot() {
     if (!productSlug) return undefined;
 
     return perfumes.find((perfume) => perfume.slug === productSlug);
+  }
+
+  /**
+   * ================================================================
+   * QUICK-QUESTION HORIZONTAL DRAGGING
+   * ================================================================
+   *
+   * CSS already provides native horizontal scrolling. These handlers add
+   * desktop click-and-drag support while preserving normal button clicks
+   * when the pointer has not actually moved.
+   */
+  function startQuickDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const strip = quickActionsRef.current;
+    if (!strip) return;
+
+    quickDragRef.current = {
+      active: true,
+      startX: event.clientX,
+      startScrollLeft: strip.scrollLeft,
+      moved: false,
+    };
+
+    strip.setPointerCapture(event.pointerId);
+  }
+
+  function moveQuickDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const strip = quickActionsRef.current;
+    const drag = quickDragRef.current;
+
+    if (!strip || !drag.active) return;
+
+    const distance = event.clientX - drag.startX;
+
+    if (Math.abs(distance) > 5) {
+      drag.moved = true;
+    }
+
+    strip.scrollLeft = drag.startScrollLeft - distance;
+  }
+
+  function endQuickDrag(event: React.PointerEvent<HTMLDivElement>) {
+    const strip = quickActionsRef.current;
+
+    if (strip?.hasPointerCapture(event.pointerId)) {
+      strip.releasePointerCapture(event.pointerId);
+    }
+
+    quickDragRef.current.active = false;
   }
 
   /**
@@ -375,8 +444,9 @@ export function Chatbot() {
        * The fallback also protects the customer experience if the AI
        * provider temporarily becomes unavailable.
        *
-       * It can answer basic business/catalogue questions, but it is NOT
-       * intended to replace the real conversational AI.
+       * It can answer basic verified business/catalogue questions, but it
+       * is NOT intended to replace the real conversational AI or manufacture
+       * a WhatsApp handoff that the server did not approve.
        */
       console.error("Chatbot AI request failed:", error);
 
@@ -549,12 +619,37 @@ export function Chatbot() {
               Useful shortcuts for customers who do not know what
               to ask the assistant first.
               ====================================================== */}
-          <div className="chat-quick-actions">
+          <div
+            ref={quickActionsRef}
+            className="chat-quick-actions"
+            onPointerDown={startQuickDrag}
+            onPointerMove={moveQuickDrag}
+            onPointerUp={endQuickDrag}
+            onPointerCancel={endQuickDrag}
+            aria-label={
+              language === "pt"
+                ? "Sugestões de perguntas — deslize horizontalmente para ver mais"
+                : "Suggested questions — swipe horizontally to see more"
+            }
+          >
             {t.chat.quick.map((question) => (
               <button
                 type="button"
                 key={question}
-                onClick={() => send(question)}
+                onClick={(event) => {
+                  /**
+                   * A real horizontal drag should scroll the strip, not
+                   * accidentally submit whichever chip ended under the
+                   * pointer when the drag finished.
+                   */
+                  if (quickDragRef.current.moved) {
+                    event.preventDefault();
+                    quickDragRef.current.moved = false;
+                    return;
+                  }
+
+                  send(question);
+                }}
                 disabled={loading}
               >
                 {question}
