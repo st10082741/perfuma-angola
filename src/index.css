@@ -1,0 +1,1115 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,500&display=swap");
+
+/* =========================================================
+   1. DESIGN TOKENS / GLOBAL RESET
+   Change the values below to adjust the overall luxury palette.
+   ========================================================= */
+:root {
+  font-family: "DM Sans", sans-serif;
+  color: #171714;
+  background: #f5f0e7;
+  --ink: #171714;
+  --paper: #f5f0e7;
+  --paper-soft: #fbf8f2;
+  --gold: #a98750;
+  --gold-deep: #7d6239;
+  --line: #d9d0c2;
+  --muted: #6c675f;
+  --success: #315b46;
+  --warning: #8a6425;
+  --danger: #7f342f;
+  --shadow: 0 24px 70px rgba(36, 28, 16, 0.09);
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  color: inherit;
+}
+img {
+  max-width: 100%;
+}
+
+/* =========================================================
+   2. NAVIGATION
+   Sticky, translucent navigation with a compact PT/EN switcher.
+   ========================================================= */
+.nav {
+  height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 5vw;
+  border-bottom: 1px solid rgba(169, 135, 80, 0.22);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(245, 240, 231, 0.92);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-family: "Playfair Display", serif;
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid rgba(169, 135, 80, 0.38);
+}
+
+.brand small {
+  display: block;
+  margin-top: 2px;
+  font:
+    9px "DM Sans",
+    sans-serif;
+  letter-spacing: 1.7px;
+  color: var(--muted);
+}
+
+.navlinks {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 12px;
+}
+
+.navlinks > a {
+  padding: 34px 0;
+  position: relative;
+}
+
+.navlinks > a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 23px;
+  height: 1px;
+  background: var(--ink);
+  transition: right 0.25s ease;
+}
+
+.navlinks > a:hover::after,
+.navlinks > a.active::after {
+  right: 0;
+}
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.35rem;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.language-switcher button {
+  border: 0;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0.42;
+}
+.language-switcher button.active {
+  opacity: 1;
+  font-weight: 700;
+}
+.menu {
+  display: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* =========================================================
+   3. REUSABLE TYPOGRAPHY / BUTTONS
+   ========================================================= */
+.eyebrow {
+  display: block;
+  margin-bottom: 20px;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold-deep);
+}
+
+.btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 18px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  font-size: 12px;
+  letter-spacing: 0.35px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn-dark {
+  background: var(--ink);
+  color: #fff;
+}
+.btn-light {
+  background: rgba(245, 240, 231, 0.5);
+}
+.btn-gold {
+  background: var(--gold);
+  color: #fff;
+  border-color: var(--gold);
+}
+.btn-gold:hover {
+  box-shadow: 0 10px 24px rgba(169, 135, 80, 0.22);
+}
+.btn-disabled {
+  opacity: 0.48;
+  pointer-events: none;
+  filter: grayscale(0.35);
+}
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 35px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================
+   4. HERO
+   Uses a real Perfuma Angola product photograph.
+   ========================================================= */
+.hero {
+  min-height: 710px;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  max-width: 1500px;
+  margin: auto;
+  overflow: hidden;
+}
+
+.hero-copy {
+  align-self: center;
+  padding: 9vw 7vw;
+  position: relative;
+}
+
+.hero-copy::before {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border: 1px solid rgba(169, 135, 80, 0.18);
+  border-radius: 50%;
+  top: 9%;
+  left: 3%;
+  pointer-events: none;
+}
+
+.hero h1,
+.page h1,
+.product h1,
+.shop-page > h1,
+.prose > h1,
+.product-info h1 {
+  font:
+    500 clamp(48px, 6vw, 88px) / 0.98 "Playfair Display",
+    serif;
+  margin: 0 0 26px;
+}
+
+.hero h1 em {
+  font-weight: 500;
+  color: var(--gold-deep);
+}
+.hero p {
+  max-width: 590px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+
+.hero-image {
+  position: relative;
+  min-height: 620px;
+  background: #d9d0c2;
+  overflow: hidden;
+}
+
+.hero-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, 0.16));
+  pointer-events: none;
+}
+
+.hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.82) contrast(1.02);
+}
+
+.hero-image span {
+  position: absolute;
+  z-index: 2;
+  right: 28px;
+  bottom: 24px;
+  background: rgba(245, 240, 231, 0.94);
+  padding: 12px 16px;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+/* =========================================================
+   5. GENERAL SECTIONS
+   ========================================================= */
+.section,
+.page {
+  padding: 100px 6vw;
+  max-width: 1500px;
+  margin: auto;
+}
+
+.section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 35px;
+}
+
+.section h2,
+.dark-section h2,
+.quote h2,
+.editorial h2 {
+  font:
+    500 clamp(34px, 4vw, 56px) "Playfair Display",
+    serif;
+  margin: 0;
+}
+
+.lead {
+  max-width: 700px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+/* =========================================================
+   6. PRODUCT GRID + CARD HOVER EXPERIENCE
+   The overlay is pointer-safe because it lives inside the product Link.
+   ========================================================= */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 26px;
+}
+
+.card {
+  min-width: 0;
+  background: var(--paper-soft);
+  border: 1px solid rgba(169, 135, 80, 0.2);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+.card-sold-out {
+  opacity: 0.78;
+}
+
+.card-image {
+  height: 430px;
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: #e9e1d5;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition:
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 0.4s ease;
+}
+
+.card:hover .card-image img {
+  transform: scale(1.045);
+  filter: brightness(0.74);
+}
+
+.card-badges {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.badge {
+  padding: 8px 10px;
+  font-size: 8px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+}
+.badge-dark {
+  background: var(--ink);
+  color: #fff;
+}
+.badge-stock {
+  margin-left: auto;
+  color: #fff;
+}
+.stock-available {
+  background: var(--success);
+}
+.stock-low {
+  background: var(--warning);
+}
+.stock-out {
+  background: var(--danger);
+}
+
+.card-hover {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 30px;
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    transparent 24%,
+    rgba(12, 12, 10, 0.84) 100%
+  );
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+.card:hover .card-hover {
+  opacity: 1;
+  transform: translateY(0);
+}
+.card-hover p {
+  margin: 0;
+  max-width: 320px;
+  color: #f5f0e7;
+  font:
+    16px/1.55 "Playfair Display",
+    serif;
+}
+.card-hover strong {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 22px;
+}
+.card-body > small {
+  color: var(--gold-deep);
+  letter-spacing: 1.5px;
+}
+.card h3 {
+  margin: 8px 0;
+  font:
+    500 27px "Playfair Display",
+    serif;
+}
+.card-body > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.price {
+  margin: 16px 0 18px;
+  font-weight: 600;
+}
+.price del {
+  margin-left: 6px;
+  color: #999;
+  font-size: 12px;
+}
+.card .btn {
+  width: 100%;
+}
+
+.inventory-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* =========================================================
+   7. SHOP TOOLBAR / FILTERS
+   ========================================================= */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 38px 0 16px;
+}
+.filters input {
+  min-width: 300px;
+  flex: 1;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  background: var(--paper-soft);
+  outline: none;
+}
+.filters input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(169, 135, 80, 0.1);
+}
+.filters button {
+  padding: 10px 17px;
+  border: 1px solid var(--line);
+  background: transparent;
+  cursor: pointer;
+}
+.filters button.active {
+  background: var(--ink);
+  color: #fff;
+}
+.catalogue-count {
+  margin: 0 0 20px;
+  color: #777;
+  font-size: 11px;
+  letter-spacing: 0.7px;
+}
+
+/* =========================================================
+   8. PRODUCT DETAILS PAGE
+   ========================================================= */
+.product-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  max-width: 1450px;
+  min-height: 760px;
+  margin: auto;
+  background: var(--paper-soft);
+}
+
+.product-photo {
+  position: relative;
+  min-height: 740px;
+  background: #e9e1d5;
+  overflow: hidden;
+}
+.product-photo img {
+  width: 100%;
+  height: 100%;
+  max-height: 900px;
+  object-fit: cover;
+  object-position: center;
+}
+.product-stock-badge {
+  position: absolute;
+  top: 22px;
+  left: 22px;
+  padding: 10px 13px;
+  color: #fff;
+  font-size: 9px;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+
+.product-info {
+  padding: 8vw 6vw;
+}
+.product-info > .eyebrow {
+  margin-top: 48px;
+}
+.product-info h1 {
+  font-size: clamp(46px, 5.3vw, 78px);
+}
+.product-price {
+  margin-bottom: 24px;
+  font-size: 25px;
+  font-weight: 600;
+}
+.product-description {
+  max-width: 660px;
+  color: var(--muted);
+  line-height: 1.85;
+}
+.back {
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.stock-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+}
+.stock-panel div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stock-panel strong {
+  font-size: 12px;
+}
+.stock-panel span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.product-info dl {
+  margin: 28px 0;
+  border-top: 1px solid var(--line);
+}
+.product-info dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+dd {
+  margin: 0;
+  text-align: right;
+}
+.notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 30px;
+}
+.notes span {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  font-size: 11px;
+}
+.order-reassurance {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   9. HOMEPAGE EDITORIAL SECTIONS
+   ========================================================= */
+.dark-section {
+  padding: 100px 7vw;
+  background: #151513;
+  color: #f7f1e6;
+  text-align: center;
+}
+.dark-section .eyebrow {
+  color: #c5a979;
+}
+.benefits {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  max-width: 1050px;
+  margin: 55px auto 0;
+  gap: 60px;
+}
+.benefits svg {
+  color: #c5a979;
+}
+.benefits h3 {
+  font:
+    500 22px "Playfair Display",
+    serif;
+}
+.benefits p {
+  color: #b9b5ad;
+  line-height: 1.7;
+  font-size: 13px;
+}
+.quote {
+  padding: 120px 7vw;
+  text-align: center;
+}
+.quote span {
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+.quote h2 {
+  max-width: 800px;
+  margin: 25px auto 35px;
+}
+
+/* =========================================================
+   10. ABOUT + CONTACT
+   ========================================================= */
+.prose {
+  min-height: 65vh;
+  max-width: 1000px;
+}
+.prose p {
+  max-width: 800px;
+  color: var(--muted);
+  font:
+    19px/1.8 "Playfair Display",
+    serif;
+}
+.prose .btn {
+  margin-top: 20px;
+}
+
+.about-facts,
+.contact-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 48px 0 30px;
+}
+.about-facts article,
+.contact-facts article {
+  min-height: 145px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: var(--paper-soft);
+}
+.about-facts strong {
+  font:
+    34px "Playfair Display",
+    serif;
+  color: var(--gold);
+}
+.about-facts span,
+.contact-facts span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.contact-facts svg {
+  color: var(--gold);
+}
+.contact-facts strong {
+  margin: 20px 0 5px;
+}
+
+/* =========================================================
+   11. FOOTER
+   ========================================================= */
+footer {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 45px;
+  padding: 70px 6vw 30px;
+  background: #0f0f0d;
+  color: #ddd;
+}
+.footer-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.footer-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid #3e372d;
+}
+footer h3 {
+  margin: 0;
+  font:
+    30px "Playfair Display",
+    serif;
+}
+footer p,
+footer span,
+footer a {
+  display: block;
+  margin: 8px 0;
+  color: #aaa;
+  font-size: 12px;
+}
+footer a:hover {
+  color: #fff;
+}
+footer small {
+  grid-column: 1 / -1;
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 1px solid #333;
+  color: #777;
+}
+
+/* =========================================================
+   12. AI CHATBOT
+   A compact sales assistant. API logic lives in /api/chat.ts.
+   ========================================================= */
+.chatbot {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 80;
+}
+.chat-launcher {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  padding: 0 17px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+.chat-launcher span {
+  font-size: 12px;
+}
+
+.chat-panel {
+  width: min(390px, calc(100vw - 28px));
+  height: min(610px, calc(100vh - 105px));
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(169, 135, 80, 0.3);
+  background: #fffdf9;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 15px 16px;
+  background: #171714;
+  color: #fff;
+}
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+}
+.chat-header div:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.chat-header strong {
+  font:
+    17px "Playfair Display",
+    serif;
+}
+.chat-header span {
+  margin-top: 2px;
+  color: #bbb;
+  font-size: 10px;
+}
+.chat-header button {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.chat-messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  overflow-y: auto;
+  background: linear-gradient(#faf6ef, #f5efe6);
+}
+.chat-message {
+  max-width: 86%;
+}
+.chat-message p {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 13px;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.chat-message.assistant {
+  align-self: flex-start;
+}
+.chat-message.assistant p {
+  background: #fff;
+  border: 1px solid #e4dbce;
+  border-bottom-left-radius: 3px;
+}
+.chat-message.user {
+  align-self: flex-end;
+}
+.chat-message.user p {
+  background: #1b1b18;
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+.chat-thinking {
+  opacity: 0.62;
+}
+
+.chat-quick-actions {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px 0;
+  overflow-x: auto;
+  background: #fffdf9;
+}
+.chat-quick-actions button {
+  flex: 0 0 auto;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: 1fr 42px;
+  gap: 8px;
+  padding: 12px;
+  background: #fffdf9;
+}
+.chat-form input {
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  outline: none;
+}
+.chat-form input:focus {
+  border-color: var(--gold);
+}
+.chat-form button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: var(--gold);
+  color: #fff;
+  cursor: pointer;
+}
+.chat-form button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* =========================================================
+   13. RESPONSIVE DESIGN
+   Hover-only content is intentionally hidden on touch-sized screens.
+   ========================================================= */
+@media (max-width: 1020px) {
+  .navlinks {
+    gap: 16px;
+  }
+  .navlinks > a {
+    font-size: 11px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 850px) {
+  .nav {
+    height: 72px;
+  }
+  .navlinks {
+    display: none;
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    padding: 20px 6vw;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  .navlinks.open {
+    display: flex;
+  }
+  .navlinks > a {
+    padding: 13px 0;
+  }
+  .navlinks > a::after {
+    display: none;
+  }
+  .menu {
+    display: block;
+  }
+  .language-switcher {
+    margin: 10px 0 0;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .hero-copy {
+    padding: 80px 6vw;
+  }
+  .hero-image {
+    min-height: 500px;
+  }
+  .benefits {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .product-page {
+    grid-template-columns: 1fr;
+  }
+  .product-photo {
+    min-height: 540px;
+    height: 540px;
+  }
+  .product-info {
+    padding: 70px 6vw;
+  }
+  .about-facts,
+  .contact-facts {
+    grid-template-columns: 1fr;
+  }
+  footer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Touch devices should not hide information behind hover. */
+  .card:hover {
+    transform: none;
+  }
+  .card:hover .card-image img {
+    transform: none;
+    filter: none;
+  }
+  .card-hover {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .brand {
+    font-size: 17px;
+  }
+  .brand small {
+    letter-spacing: 1.1px;
+    font-size: 8px;
+  }
+  .hero h1 {
+    font-size: 50px;
+  }
+  .hero-image {
+    min-height: 410px;
+  }
+  .section,
+  .page {
+    padding: 72px 5vw;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .card-image {
+    height: 390px;
+  }
+  .card-body {
+    padding: 17px;
+  }
+  .card h3 {
+    font-size: 23px;
+  }
+  .filters input {
+    min-width: 100%;
+  }
+  .product-photo {
+    min-height: 430px;
+    height: 430px;
+  }
+  .product-info h1 {
+    font-size: 48px;
+  }
+  footer {
+    grid-template-columns: 1fr;
+  }
+  .chatbot {
+    right: 14px;
+    bottom: 14px;
+  }
+  .chat-launcher span {
+    display: none;
+  }
+  .chat-launcher {
+    width: 52px;
+    padding: 0;
+    justify-content: center;
+  }
+}
