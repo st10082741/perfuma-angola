@@ -54,26 +54,6 @@ interface GroqChatResponse {
   }>;
 }
 
-/**
- * Finds catalogue products that the assistant actually mentioned in its
- * response. Only local catalogue slugs are returned, so the model can never
- * manufacture a product card, image path or product URL.
- *
- * The result is intentionally capped at three products. A recommendation
- * should feel visual and useful without turning the small chat window into a
- * duplicate of the full catalogue page.
- */
-function findSuggestedProductSlugs(reply: string): string[] {
-  const normalizedReply = normalizeForMatching(reply);
-
-  return perfumes
-    .filter((perfume) =>
-      normalizedReply.includes(normalizeForMatching(perfume.name)),
-    )
-    .slice(0, 3)
-    .map((perfume) => perfume.slug);
-}
-
 /* ----------------------------------------------------------------
  * 2. SAFE INPUT + TEXT NORMALIZATION
  * ---------------------------------------------------------------- */
@@ -493,10 +473,7 @@ export default async function handler(request: any, response: any) {
   );
 
   if (verifiedBusinessAnswer) {
-    return response.status(200).json({
-      reply: verifiedBusinessAnswer,
-      suggestedProducts: findSuggestedProductSlugs(verifiedBusinessAnswer),
-    });
+    return response.status(200).json({ reply: verifiedBusinessAnswer });
   }
 
   const catalogue = buildCompactCatalogue(language);
@@ -573,18 +550,7 @@ export default async function handler(request: any, response: any) {
       };
     }
 
-    /**
-     * Product visuals are derived from catalogue names that appear in the
-     * final assistant reply. The frontend receives only trusted local slugs
-     * and resolves the image, price and product link from perfumes.ts.
-     */
-    const suggestedProducts = findSuggestedProductSlugs(reply);
-
-    return response.status(200).json({
-      reply,
-      action,
-      suggestedProducts,
-    });
+    return response.status(200).json({ reply, action });
   } catch (error) {
     console.error("Perfuma Angola Chat API error:", error);
 
