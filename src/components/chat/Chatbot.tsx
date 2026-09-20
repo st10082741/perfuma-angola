@@ -51,6 +51,7 @@ import { chatbotWhatsAppUrl } from "../../utils/whatsapp";
 import { perfumes } from "../../data/perfumes";
 
 import type { Perfume } from "../../types/perfume";
+import { Link } from "react-router-dom";
 
 
 /**
@@ -324,7 +325,18 @@ export function Chatbot() {
      * the compact chat window with multiple cards. Product cards are for the
      * focused recommendation/selection experience.
      */
-    return specificMatches.length <= 2 ? specificMatches : [];
+    /**
+     * A response containing bullet points is a comparison/list response.
+     * Keep those answers as readable text only; visual cards are reserved
+     * for a focused recommendation or selection.
+     */
+    const isProductListResponse = /(^|\n)\s*[•-]\s+/m.test(reply);
+
+    if (isProductListResponse || specificMatches.length !== 1) {
+      return [];
+    }
+
+    return specificMatches;
   }
 
   /**
@@ -368,15 +380,17 @@ export function Chatbot() {
                 <span>{product.price.toLocaleString("pt-PT")} Kz</span>
               </div>
 
-              <a
-                href={`/perfume/${product.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              {/**
+               * React Router keeps navigation inside the current Perfuma
+               * Angola browser tab instead of opening a duplicate tab/window.
+               */}
+              <Link
+                to={`/perfume/${product.slug}`}
                 className="chat-product-card-link"
               >
                 {language === "pt" ? "Ver produto" : "View product"}
                 <ExternalLink size={12} />
-              </a>
+              </Link>
             </div>
           </article>
         ))}
