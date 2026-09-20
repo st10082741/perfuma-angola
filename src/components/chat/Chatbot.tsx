@@ -276,11 +276,25 @@ export function Chatbot() {
    * removes the duplicated "abaixo. abaixo." wording observed in production.
    */
   function formatAssistantDisplayText(text: string): string {
-    return text
+    let formatted = text
       .replace(/abaixo\.\s*abaixo\./gi, "abaixo.")
       .replace(/(variantes?:)\s*\n(?=\s*[•-])/gi, "$1\n\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim();
+      .replace(/\n{3,}/g, "\n\n");
+
+    /**
+     * The catalogue keeps category values in English for stable TypeScript
+     * data (`Men`, `Women`, `Unisex`). Customer-facing Portuguese should use
+     * Portuguese wording, so the English label "unisex" is presented as
+     * "unissexo" only when the interface language is Portuguese.
+     *
+     * This changes presentation text only; it does not modify catalogue data,
+     * AI reasoning, product matching or the English interface.
+     */
+    if (language === "pt") {
+      formatted = formatted.replace(/\bunisex\b/gi, "unissexo");
+    }
+
+    return formatted.trim();
   }
 
   /**
@@ -294,16 +308,26 @@ export function Chatbot() {
    *   "Ramz Lattafa 30 ml" card merely because both contain "Ramz Lattafa".
    */
   function findSuggestedProducts(reply: string): Perfume[] {
+    /**
+     * AI text may contain Unicode spacing such as a narrow no-break space
+     * (for example "Ramz Lattafa Gold") instead of a normal keyboard space.
+     * Converting every whitespace run to one ordinary space lets catalogue
+     * names match reliably without changing what the customer sees.
+     */
     const normalizedReply = reply
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase();
+      .replace(/\s+/g, " ")
+      .toLowerCase()
+      .trim();
 
     const matches = perfumes.filter((perfume) => {
       const normalizedName = perfume.name
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
+        .replace(/\s+/g, " ")
+        .toLowerCase()
+        .trim();
 
       return normalizedReply.includes(normalizedName);
     });
@@ -342,8 +366,8 @@ export function Chatbot() {
   /**
    * Renders a compact catalogue-backed product recommendation.
    *
-   * Opening the full product page in a new tab preserves the current chat
-   * session in the original tab. No cart or database is introduced.
+   * The product page opens through React Router in the current browser tab.
+   * No cart or database is introduced.
    */
   function renderSuggestedProducts(productSlugs?: string[]) {
     if (!productSlugs?.length) return null;
