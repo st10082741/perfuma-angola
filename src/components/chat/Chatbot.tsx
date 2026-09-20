@@ -52,6 +52,7 @@ import { perfumes } from "../../data/perfumes";
 
 import type { Perfume } from "../../types/perfume";
 
+
 /**
  * ================================================================
  * CHAT TYPES
@@ -89,13 +90,6 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   action?: ChatAction;
-
-  /**
-   * Catalogue slugs returned by the server when the assistant recommends or
-   * discusses specific products. The UI resolves all visual/product details
-   * from the trusted local catalogue rather than trusting AI-generated data.
-   */
-  suggestedProducts?: string[];
 }
 
 /**
@@ -104,7 +98,7 @@ interface ChatMessage {
 interface ChatApiResponse {
   reply?: string;
   action?: ChatAction;
-  suggestedProducts?: string[];
+  activeProductSlug?: string;
   error?: string;
 }
 
@@ -160,6 +154,14 @@ export function Chatbot() {
   const [loading, setLoading] = useState(false);
 
   /**
+   * Remembers the product currently being discussed during this browser
+   * session. The server validates this slug against the trusted catalogue
+   * before using it, so conversational references such as "esse" or a later
+   * WhatsApp request can remain attached to the correct perfume.
+   */
+  const [activeProductSlug, setActiveProductSlug] = useState<string>();
+
+  /**
    * ---------------------------------------------------------------
    * DOM REFERENCES
    * ---------------------------------------------------------------
@@ -173,27 +175,6 @@ export function Chatbot() {
   // Invisible element placed at the bottom of the conversation.
   // Scrolling to it keeps the latest message visible automatically.
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * References the horizontal quick-question strip.
-   *
-   * Mobile visitors can swipe it naturally. On desktop, the pointer-drag
-   * handlers below let customers click-and-drag left/right when the
-   * suggestions extend beyond the visible chatbot width.
-   */
-  const quickActionsRef = useRef<HTMLDivElement>(null);
-
-  /**
-   * Pointer-drag state is stored in a ref rather than React state because
-   * scrolling should remain smooth without causing a component re-render
-   * for every pixel of pointer movement.
-   */
-  const quickDragRef = useRef({
-    active: false,
-    startX: 0,
-    startScrollLeft: 0,
-    moved: false,
-  });
 
   /**
    * ================================================================
@@ -271,53 +252,6 @@ export function Chatbot() {
     return perfumes.find((perfume) => perfume.slug === productSlug);
   }
 
-  /**
-   * ================================================================
-   * QUICK-QUESTION HORIZONTAL DRAGGING
-   * ================================================================
-   *
-   * CSS already provides native horizontal scrolling. These handlers add
-   * desktop click-and-drag support while preserving normal button clicks
-   * when the pointer has not actually moved.
-   */
-  function startQuickDrag(event: React.PointerEvent<HTMLDivElement>) {
-    const strip = quickActionsRef.current;
-    if (!strip) return;
-
-    quickDragRef.current = {
-      active: true,
-      startX: event.clientX,
-      startScrollLeft: strip.scrollLeft,
-      moved: false,
-    };
-
-    strip.setPointerCapture(event.pointerId);
-  }
-
-  function moveQuickDrag(event: React.PointerEvent<HTMLDivElement>) {
-    const strip = quickActionsRef.current;
-    const drag = quickDragRef.current;
-
-    if (!strip || !drag.active) return;
-
-    const distance = event.clientX - drag.startX;
-
-    if (Math.abs(distance) > 5) {
-      drag.moved = true;
-    }
-
-    strip.scrollLeft = drag.startScrollLeft - distance;
-  }
-
-  function endQuickDrag(event: React.PointerEvent<HTMLDivElement>) {
-    const strip = quickActionsRef.current;
-
-    if (strip?.hasPointerCapture(event.pointerId)) {
-      strip.releasePointerCapture(event.pointerId);
-    }
-
-    quickDragRef.current.active = false;
-  }
 
   /**
    * ================================================================
@@ -390,6 +324,7 @@ export function Chatbot() {
 
         body: JSON.stringify({
           language,
+          activeProductSlug,
 
           /**
            * Only recent role/content values are sent.
@@ -432,13 +367,22 @@ export function Chatbot() {
        *     ↓
        * WhatsApp CTA
        */
+      /**
+       * Keep the trusted server-resolved product as session context.
+       * This is deliberately separate from the visible AI text.
+       */
+      if (data.activeProductSlug && findProduct(data.activeProductSlug)) {
+        setActiveProductSlug(data.activeProductSlug);
+      } else if (data.action?.productSlug && findProduct(data.action.productSlug)) {
+        setActiveProductSlug(data.action.productSlug);
+      }
+
       setMessages((currentMessages) => [
         ...currentMessages,
         {
           role: "assistant",
           content: data.reply!.trim(),
           action: data.action,
-          suggestedProducts: data.suggestedProducts,
         },
       ]);
     } catch (error) {
@@ -480,74 +424,6 @@ export function Chatbot() {
         fieldRef.current?.focus();
       }, 50);
     }
-  }
-
-  /**
-   * ================================================================
-   * VISUAL PRODUCT RECOMMENDATIONS
-   * ================================================================
-   *
-   * When the AI mentions a real catalogue product, /api/chat returns its
-   * trusted slug. This renderer turns that slug into a compact visual card
-   * containing the real product image, price and basic details.
-   *
-   * Product pages open in a new tab so the customer can inspect a perfume
-   * without losing the current chatbot conversation.
-   */
-  function renderSuggestedProducts(productSlugs?: string[]) {
-    if (!productSlugs?.length) return null;
-
-    const products = productSlugs
-      .map((slug) => findProduct(slug))
-      .filter((product): product is Perfume => Boolean(product));
-
-    if (!products.length) return null;
-
-    return (
-      <div
-        className="chat-product-suggestions"
-        aria-label={
-          language === "pt"
-            ? "Produtos recomendados"
-            : "Recommended products"
-        }
-      >
-        {products.map((product) => (
-          <article className="chat-product-card" key={product.slug}>
-            <img
-              src={product.image}
-              alt={`${product.brand} ${product.name}`}
-              loading="lazy"
-            />
-
-            <div className="chat-product-card-copy">
-              <small>{product.brand}</small>
-              <strong>{product.name}</strong>
-
-              <span>
-                {product.size} · {product.concentration}
-              </span>
-
-              <b>
-                {product.price.toLocaleString(
-                  language === "pt" ? "pt-AO" : "en-US",
-                )}{" "}
-                Kz
-              </b>
-
-              <a
-                href={`/perfume/${product.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {language === "pt" ? "Ver produto" : "View product"}
-                <ExternalLink size={12} />
-              </a>
-            </div>
-          </article>
-        ))}
-      </div>
-    );
   }
 
   /**
@@ -665,8 +541,6 @@ export function Chatbot() {
                  * Only assistant messages can display server-approved
                  * actions such as the WhatsApp continuation CTA.
                  */}
-                {message.role === "assistant" &&
-                  renderSuggestedProducts(message.suggestedProducts)}
 
                 {message.role === "assistant" && renderAction(message.action)}
               </div>
@@ -700,12 +574,7 @@ export function Chatbot() {
               to ask the assistant first.
               ====================================================== */}
           <div
-            ref={quickActionsRef}
             className="chat-quick-actions"
-            onPointerDown={startQuickDrag}
-            onPointerMove={moveQuickDrag}
-            onPointerUp={endQuickDrag}
-            onPointerCancel={endQuickDrag}
             aria-label={
               language === "pt"
                 ? "Sugestões de perguntas — deslize horizontalmente para ver mais"
@@ -716,20 +585,7 @@ export function Chatbot() {
               <button
                 type="button"
                 key={question}
-                onClick={(event) => {
-                  /**
-                   * A real horizontal drag should scroll the strip, not
-                   * accidentally submit whichever chip ended under the
-                   * pointer when the drag finished.
-                   */
-                  if (quickDragRef.current.moved) {
-                    event.preventDefault();
-                    quickDragRef.current.moved = false;
-                    return;
-                  }
-
-                  send(question);
-                }}
+                onClick={() => void send(question)}
                 disabled={loading}
               >
                 {question}
