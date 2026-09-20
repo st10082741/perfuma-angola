@@ -89,6 +89,13 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   action?: ChatAction;
+
+  /**
+   * Catalogue slugs returned by the server when the assistant recommends or
+   * discusses specific products. The UI resolves all visual/product details
+   * from the trusted local catalogue rather than trusting AI-generated data.
+   */
+  suggestedProducts?: string[];
 }
 
 /**
@@ -97,6 +104,7 @@ interface ChatMessage {
 interface ChatApiResponse {
   reply?: string;
   action?: ChatAction;
+  suggestedProducts?: string[];
   error?: string;
 }
 
@@ -430,6 +438,7 @@ export function Chatbot() {
           role: "assistant",
           content: data.reply!.trim(),
           action: data.action,
+          suggestedProducts: data.suggestedProducts,
         },
       ]);
     } catch (error) {
@@ -471,6 +480,74 @@ export function Chatbot() {
         fieldRef.current?.focus();
       }, 50);
     }
+  }
+
+  /**
+   * ================================================================
+   * VISUAL PRODUCT RECOMMENDATIONS
+   * ================================================================
+   *
+   * When the AI mentions a real catalogue product, /api/chat returns its
+   * trusted slug. This renderer turns that slug into a compact visual card
+   * containing the real product image, price and basic details.
+   *
+   * Product pages open in a new tab so the customer can inspect a perfume
+   * without losing the current chatbot conversation.
+   */
+  function renderSuggestedProducts(productSlugs?: string[]) {
+    if (!productSlugs?.length) return null;
+
+    const products = productSlugs
+      .map((slug) => findProduct(slug))
+      .filter((product): product is Perfume => Boolean(product));
+
+    if (!products.length) return null;
+
+    return (
+      <div
+        className="chat-product-suggestions"
+        aria-label={
+          language === "pt"
+            ? "Produtos recomendados"
+            : "Recommended products"
+        }
+      >
+        {products.map((product) => (
+          <article className="chat-product-card" key={product.slug}>
+            <img
+              src={product.image}
+              alt={`${product.brand} ${product.name}`}
+              loading="lazy"
+            />
+
+            <div className="chat-product-card-copy">
+              <small>{product.brand}</small>
+              <strong>{product.name}</strong>
+
+              <span>
+                {product.size} · {product.concentration}
+              </span>
+
+              <b>
+                {product.price.toLocaleString(
+                  language === "pt" ? "pt-AO" : "en-US",
+                )}{" "}
+                Kz
+              </b>
+
+              <a
+                href={`/perfume/${product.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {language === "pt" ? "Ver produto" : "View product"}
+                <ExternalLink size={12} />
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    );
   }
 
   /**
@@ -588,6 +665,9 @@ export function Chatbot() {
                  * Only assistant messages can display server-approved
                  * actions such as the WhatsApp continuation CTA.
                  */}
+                {message.role === "assistant" &&
+                  renderSuggestedProducts(message.suggestedProducts)}
+
                 {message.role === "assistant" && renderAction(message.action)}
               </div>
             ))}
