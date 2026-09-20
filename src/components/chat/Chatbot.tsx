@@ -90,6 +90,14 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   action?: ChatAction;
+
+  /**
+   * Product cards are presentation metadata only.
+   *
+   * The AI does not provide image paths, prices or product URLs. We resolve
+   * those details from the trusted local catalogue after reading the AI text.
+   */
+  suggestedProductSlugs?: string[];
 }
 
 /**
@@ -252,6 +260,130 @@ export function Chatbot() {
     return perfumes.find((perfume) => perfume.slug === productSlug);
   }
 
+  /**
+   * ================================================================
+   * CHAT PRESENTATION HELPERS
+   * ================================================================
+   *
+   * These helpers deliberately live in the frontend. They improve how an
+   * already-approved AI response is DISPLAYED without changing the AI brain,
+   * recommendation logic, product memory or WhatsApp action rules.
+   */
+
+  /**
+   * Adds breathing room before a plain-text variant list and defensively
+   * removes the duplicated "abaixo. abaixo." wording observed in production.
+   */
+  function formatAssistantDisplayText(text: string): string {
+    return text
+      .replace(/abaixo\.\s*abaixo\./gi, "abaixo.")
+      .replace(/(variantes?:)\s*\n(?=\s*[•-])/gi, "$1\n\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  /**
+   * Finds catalogue products explicitly named in the assistant's reply.
+   *
+   * IMPORTANT:
+   * - This does NOT ask the AI to generate card data.
+   * - Image, price, size and route always come from perfumes.ts.
+   * - Generic names that are prefixes of a more specific matched product are
+   *   removed. Example: "Ramz Lattafa Gold" must not also create the generic
+   *   "Ramz Lattafa 30 ml" card merely because both contain "Ramz Lattafa".
+   */
+  function findSuggestedProducts(reply: string): Perfume[] {
+    const normalizedReply = reply
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+
+    const matches = perfumes.filter((perfume) => {
+      const normalizedName = perfume.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+      return normalizedReply.includes(normalizedName);
+    });
+
+    const specificMatches = matches.filter((candidate) => {
+      const candidateName = candidate.name.toLowerCase();
+
+      return !matches.some(
+        (other) =>
+          other.slug !== candidate.slug &&
+          other.name.toLowerCase().startsWith(candidateName) &&
+          other.name.length > candidate.name.length,
+      );
+    });
+
+    /**
+     * A multi-variant availability answer can mention several products.
+     * We keep that response as a clean text comparison rather than flooding
+     * the compact chat window with multiple cards. Product cards are for the
+     * focused recommendation/selection experience.
+     */
+    return specificMatches.length <= 2 ? specificMatches : [];
+  }
+
+  /**
+   * Renders a compact catalogue-backed product recommendation.
+   *
+   * Opening the full product page in a new tab preserves the current chat
+   * session in the original tab. No cart or database is introduced.
+   */
+  function renderSuggestedProducts(productSlugs?: string[]) {
+    if (!productSlugs?.length) return null;
+
+    const products = productSlugs
+      .map((slug) => findProduct(slug))
+      .filter((product): product is Perfume => Boolean(product));
+
+    if (!products.length) return null;
+
+    return (
+      <div
+        className="chat-product-recommendations"
+        aria-label={
+          language === "pt"
+            ? "Produtos recomendados"
+            : "Recommended products"
+        }
+      >
+        {products.map((product) => (
+          <article className="chat-product-card" key={product.slug}>
+            <img
+              src={product.image}
+              alt={product.name}
+              loading="lazy"
+            />
+
+            <div className="chat-product-card-content">
+              <span className="chat-product-card-brand">{product.brand}</span>
+              <strong>{product.name}</strong>
+
+              <div className="chat-product-card-meta">
+                <span>{product.size}</span>
+                <span>{product.price.toLocaleString("pt-PT")} Kz</span>
+              </div>
+
+              <a
+                href={`/perfume/${product.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="chat-product-card-link"
+              >
+                {language === "pt" ? "Ver produto" : "View product"}
+                <ExternalLink size={12} />
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    );
+  }
+
 
   /**
    * ================================================================
@@ -377,12 +509,26 @@ export function Chatbot() {
         setActiveProductSlug(data.action.productSlug);
       }
 
+      const displayReply = formatAssistantDisplayText(data.reply!.trim());
+
+      /**
+       * Visual recommendations are intentionally suppressed on purchase
+       * handoff messages. At that point the trusted WhatsApp CTA is the
+       * primary action and we avoid cluttering the customer's next step.
+       */
+      const suggestedProducts = data.action
+        ? []
+        : findSuggestedProducts(displayReply);
+
       setMessages((currentMessages) => [
         ...currentMessages,
         {
           role: "assistant",
-          content: data.reply!.trim(),
+          content: displayReply,
           action: data.action,
+          suggestedProductSlugs: suggestedProducts.map(
+            (product) => product.slug,
+          ),
         },
       ]);
     } catch (error) {
@@ -541,6 +687,9 @@ export function Chatbot() {
                  * Only assistant messages can display server-approved
                  * actions such as the WhatsApp continuation CTA.
                  */}
+
+                {message.role === "assistant" &&
+                  renderSuggestedProducts(message.suggestedProductSlugs)}
 
                 {message.role === "assistant" && renderAction(message.action)}
               </div>
