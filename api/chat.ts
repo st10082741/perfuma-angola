@@ -80,6 +80,24 @@ function normalizeText(text: string): string {
 }
 
 /**
+ * Detects a small set of common misspellings of the purchase verbs without
+ * turning the assistant into a broad keyword bot. This exists because short
+ * messages such as "quero comora esse" still express clear purchase intent.
+ * The same rule is language-neutral at the control layer: Portuguese and
+ * English continue through the same deterministic purchase pipeline.
+ */
+function hasCommonPurchaseVerbTypo(text: string): boolean {
+  const value = normalizeText(text);
+
+  const portuguesePurchaseTypo =
+    /\bquero\s+(?:comora|compra|coprar|comprr|comrpar)\b/.test(value);
+  const englishPurchaseTypo =
+    /\bi\s+want\s+to\s+(?:byu|buu|oder|ordr)\b/.test(value);
+
+  return portuguesePurchaseTypo || englishPurchaseTypo;
+}
+
+/**
  * The browser can send the full visible conversation, but the API forwards
  * only a compact recent window to Groq. Six messages are normally three
  * complete turns — enough for a focused sales conversation while materially
@@ -129,7 +147,7 @@ function getActiveProductSlug(body: unknown): string | undefined {
 function hasPurchaseIntent(text: string): boolean {
   const value = normalizeText(text);
 
-  return [
+  return hasCommonPurchaseVerbTypo(text) || [
     "quero comprar",
     "quero encomendar",
     "quero pedir",
@@ -479,7 +497,8 @@ CONVERSATION
 - If the customer says they do not understand, explain the previous point more simply.
 
 PRODUCT TRUTH
-- CATALOGUE is the only source for products, price, stock, size, concentration, family, description and notes.
+- CATALOGUE is the only source for products, product display names, price, stock, size, concentration, family, description and notes.
+- Preserve the catalogue display name exactly in customer-facing replies. In particular, the Onlyou product is "Asada" in the catalogue; do not rename it "Asad Onlyou". Lattafa Asad/Asad Elixir and Onlyou Asada are separate catalogue products. Customer misspellings such as "asad onlyou", "asd onyou" or "asada onlyou" may still be understood as the Onlyou Asada product when context makes that clear, but the reply must use the catalogue name.
 - Never add fragrance facts from memory or the internet.
 - Respect category, preferences and maximum budget. Prefer stock > 0. stock 0 = unavailable; 1-2 = low; >2 = available.
 - If no verified match exists, say so. Never claim there is "no risk" of selling out.
@@ -702,8 +721,21 @@ export default async function handler(request: any, response: any) {
     incoming,
     latestUserMessage,
   );
+  /**
+   * The browser's active product represents the most recently resolved product
+   * from the previous server response. For referential messages such as
+   * "esse" / "this one", prefer that trusted session context over an older
+   * perfume name that may still exist in the six-message conversation window.
+   * An explicit contextual selection in the current message remains strongest.
+   */
+  const latestNormalized = normalizeText(latestUserMessage);
+  const usesContextualReference = [
+    "esse", "este", "essa", "esta", "this one", "that one", "it",
+  ].some((reference) => latestNormalized.includes(reference));
+
   const recentProductSlug =
     contextualSelectionSlug ||
+    (usesContextualReference ? browserActiveProductSlug : undefined) ||
     findRecentProductSlug(incoming) ||
     browserActiveProductSlug;
 
