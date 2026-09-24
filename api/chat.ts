@@ -6,23 +6,23 @@
  * Language: TypeScript
  * Runtime: Node.js
  * Platform: Vercel Serverless Functions
- * AI Provider: Groq
+ * AI Provider: Provider-independent adapter layer (Groq currently active)
  *
  * PURPOSE:
  * This server-side API powers the Perfuma Angola virtual sales assistant.
- * It protects the Groq API key, grounds product answers in the official
+ * It protects AI provider credentials, grounds product answers in the official
  * catalogue, preserves recent conversational context, and returns trusted
  * UI actions to the React frontend.
  *
  * FINAL ARCHITECTURE GOALS:
  * 1. Let the AI handle natural conversation and fragrance recommendations.
  * 2. Answer simple, confirmed business facts locally when AI is unnecessary.
- * 3. Keep Groq prompts compact enough for the current TPM allowance.
+ * 3. Keep AI prompts compact enough for provider token/rate limits.
  * 4. Preserve context for replies such as "sim", "esse", "outro" and typos.
  * 5. Never invent Perfuma Angola facts, prices, stock or payment details.
  * 6. Use WhatsApp as a purchase/human handoff — not as an escape from normal
  *    customer questions.
- * 7. Degrade gracefully if Groq is temporarily rate-limited.
+ * 7. Degrade gracefully if the active AI provider is temporarily rate-limited.
  * ================================================================
  */
 
@@ -30,6 +30,7 @@
 
 import { perfumes } from "../src/data/perfumes.js";
 import { businessKnowledge } from "../src/data/businessKnowledge.js";
+import { generateAIResponse, getAIProviderName } from "./ai/index.js";
 
 /* ----------------------------------------------------------------
  * 1. TYPES
@@ -45,14 +46,6 @@ interface ChatAction {
   productSlug?: string;
 }
 
-interface GroqChatResponse {
-  choices?: Array<{
-    message?: {
-      content?: string;
-    };
-    finish_reason?: string;
-  }>;
-}
 
 /* ----------------------------------------------------------------
  * 2. SAFE INPUT + TEXT NORMALIZATION
@@ -458,9 +451,15 @@ function buildSystemPrompt(
 ): string {
   return `You are Perfuma Angola's official fragrance sales assistant.
 
+RESPONSE LANGUAGE — AUTHORITATIVE
+- UI=${language}. Treat this as the active conversation language.
+- If UI=en, ALWAYS reply in English, including short/ambiguous follow-ups such as "yes", "sure", "that one", "cheaper", numbers or product names. Do not drift back to Portuguese.
+- If UI=pt, reply in Portuguese, including short/ambiguous follow-ups.
+- Only switch away from UI when the customer explicitly asks to change language (for example "speak English", "English please", "fala português", "em português").
+- Never change language merely because a product name, number or short ambiguous message could belong to either language.
+
 STYLE
-- Portuguese is primary. In Portuguese use natural neutral/Angolan wording: "posso ajudar a encontrar", "procura", "gostaria". Do not use Brazilian customer-address forms such as "você", "ajudar você", "está procurando" or similar phrasing. Prefer omitted pronouns or natural forms such as "Pode...", "Procura...", "Se precisar...".
-- Reply in English when the customer uses English. Follow natural language switches.
+- In Portuguese use natural neutral/Angolan wording: "posso ajudar a encontrar", "procura", "gostaria". Do not use Brazilian customer-address forms such as "você", "ajudar você", "está procurando" or similar phrasing. Prefer omitted pronouns or natural forms such as "Pode...", "Procura...", "Se precisar...".
 - Plain text only. Never output Markdown, **, headings, tables, HTML entities, links or raw URLs.
 - Be warm, intelligent, friendly and direct. Sound like a knowledgeable Perfuma Angola sales assistant, not a scripted support bot.
 - Keep normal replies VERY concise: usually 1-2 short sentences. Use 3 only when genuinely necessary.
@@ -510,41 +509,13 @@ ${catalogue}`;
 }
 
 /* ----------------------------------------------------------------
- * 6. GROQ REQUEST
+ * 6. PROVIDER-INDEPENDENT AI REQUEST
  * ---------------------------------------------------------------- */
 
 /**
- * One compact Groq request handles the genuinely conversational work.
- *
- * max_completion_tokens leaves enough room for GPT-OSS internal reasoning
- * plus a short customer-facing answer. Production testing showed that a
- * smaller ceiling could end a recommendation mid-sentence. The system prompt
- * still requires very short replies, so this is headroom rather than a request
- * for longer customer messages.
+ * Provider communication lives under api/ai/. This controller owns Perfuma
+ * Angola business logic and does not know Groq/OpenAI/Gemini request formats.
  */
-async function requestGroq(
-  apiKey: string,
-  model: string,
-  systemPrompt: string,
-  conversation: IncomingMessage[],
-): Promise<Response> {
-  return fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...conversation,
-      ],
-      temperature: 0.2,
-      max_completion_tokens: 650,
-    }),
-  });
-}
 
 /* ----------------------------------------------------------------
  * 7. RESPONSE CLEANUP
@@ -646,13 +617,6 @@ export default async function handler(request: any, response: any) {
     return response.status(405).json({ error: "Method not allowed" });
   }
 
-  const apiKey = process.env.GROQ_API_KEY;
-
-  if (!apiKey) {
-    console.error("GROQ_API_KEY is not configured.");
-    return response.status(503).json({ error: "AI is not configured yet." });
-  }
-
   const language: "pt" | "en" =
     request.body?.language === "en" ? "en" : "pt";
 
@@ -731,44 +695,42 @@ export default async function handler(request: any, response: any) {
     business,
     shouldShowWhatsApp,
   );
-  const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
-
   try {
-    const groqResponse = await requestGroq(
-      apiKey,
-      model,
+    const providerName = getAIProviderName();
+    const aiResult = await generateAIResponse({
       systemPrompt,
-      incoming,
-    );
+      conversation: incoming,
+      temperature: 0.2,
+      maxCompletionTokens: 650,
+    });
 
     /**
-     * Do not immediately retry a 429 inside the same TPM window. A retry can
-     * consume more of the same constrained minute and worsen the situation.
-     * Instead, preserve the conversation and invite a short retry in-chat.
+     * Do not immediately retry a rate limit inside the same provider window.
+     * Retrying immediately can worsen the same quota/token constraint.
      */
-    if (groqResponse.status === 429) {
-      const details = await groqResponse.text();
-      console.warn("Groq rate limit reached:", details);
+    if (aiResult.rateLimited) {
+      console.warn(`${providerName} rate limit reached:`, aiResult.error);
 
       return response.status(200).json({
         reply: rateLimitReply(language),
+        activeProductSlug: recentProductSlug,
       });
     }
 
-    if (!groqResponse.ok) {
-      const details = await groqResponse.text();
-      console.error("Groq API request failed:", groqResponse.status, details);
+    if (!aiResult.ok) {
+      console.error(`${providerName} AI request failed:`, aiResult.error);
 
-      return response.status(502).json({
-        error: "AI provider unavailable.",
+      return response.status(aiResult.notConfigured ? 503 : 502).json({
+        error: aiResult.notConfigured
+          ? "AI is not configured yet."
+          : "AI provider unavailable.",
       });
     }
 
-    const data = (await groqResponse.json()) as GroqChatResponse;
-    const rawReply = data.choices?.[0]?.message?.content?.trim();
+    const rawReply = aiResult.content?.trim();
 
     if (!rawReply) {
-      console.error("Groq returned an empty assistant response.");
+      console.error(`${providerName} returned an empty assistant response.`);
       return response.status(502).json({ error: "Empty AI response." });
     }
 
@@ -785,10 +747,8 @@ export default async function handler(request: any, response: any) {
      * receives the best available text, while Vercel logs tell us if the
      * provider stopped because of the completion-token ceiling.
      */
-    const finishReason = data.choices?.[0]?.finish_reason;
-
-    if (finishReason === "length") {
-      console.warn("Groq response reached the completion token limit.");
+    if (aiResult.finishReason === "length") {
+      console.warn(`${providerName} response reached the completion token limit.`);
     }
 
     return response.status(200).json({
