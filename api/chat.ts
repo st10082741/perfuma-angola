@@ -149,6 +149,8 @@ function hasPurchaseIntent(text: string): boolean {
 
   return hasCommonPurchaseVerbTypo(text) || [
     "quero comprar",
+    "quero fazer a compra",
+    "quero fazer compra",
     "quero encomendar",
     "quero pedir",
     "quero esse",
@@ -180,6 +182,9 @@ function hasPurchaseIntent(text: string): boolean {
     "como faco para encomendar",
     "i want to buy",
     "i want to order",
+    "i want order",
+    "i want to iorder",
+    "i want iorder",
     "i'll take it",
     "ill take it",
     "how do i buy",
@@ -196,6 +201,14 @@ function hasPurchaseIntent(text: string): boolean {
  */
 function requestsHumanHelp(text: string): boolean {
   const value = normalizeText(text);
+
+  /**
+   * An explicit WhatsApp mention is itself a handoff request. This keeps
+   * phrases such as "I want to order it on WhatsApp" deterministic instead
+   * of sending them to the AI provider, while ordinary purchase messages
+   * continue through the same trusted purchase-intent pipeline below.
+   */
+  if (/\bwhatsapp\b/.test(value)) return true;
 
   return [
     "falar com alguem",
