@@ -92,7 +92,7 @@ function hasCommonPurchaseVerbTypo(text: string): boolean {
   const portuguesePurchaseTypo =
     /\bquero\s+(?:comora|compra|coprar|comprr|comrpar)\b/.test(value);
   const englishPurchaseTypo =
-    /\bi\s+want\s+to\s+(?:byu|buu|oder|ordr)\b/.test(value);
+    /\bi\s+want\s+(?:to|o)\s+(?:byu|buu|oder|ordr)\b/.test(value);
 
   return portuguesePurchaseTypo || englishPurchaseTypo;
 }
@@ -171,6 +171,12 @@ function hasPurchaseIntent(text: string): boolean {
     "quero avancar",
     "podemos avançar",
     "podemos avancar",
+    "quero prosseguir",
+    "quero continuar com a compra",
+    "quero efetuar o pagamento",
+    "quero fazer o pagamento",
+    "quero fazer pagamento",
+    "quero pagar",
     "vou levar",
     "vou ficar com esse",
     "vou ficar com este",
@@ -183,6 +189,11 @@ function hasPurchaseIntent(text: string): boolean {
     "i want to buy",
     "i want to order",
     "i want order",
+    "i want to proceed",
+    "i want proceed",
+    "i want to make the payment",
+    "i want to make payment",
+    "i want to pay",
     "i want to iorder",
     "i want iorder",
     "i'll take it",
@@ -259,6 +270,9 @@ function needsBusinessHandoff(text: string): boolean {
     "qual é o iban",
     "manda o iban",
     "envia o iban",
+    "preciso do vosso iban",
+    "preciso do seu iban",
+    "preciso do iban",
     "dados bancarios",
     "dados bancários",
     "numero da conta",
@@ -279,6 +293,8 @@ function needsBusinessHandoff(text: string): boolean {
     "confirmar a morada",
     "what is your iban",
     "bank details",
+    "i need your iban",
+    "i need the iban",
     "delivery fee",
     "how much is delivery",
     "do you deliver to my area",
