@@ -22,8 +22,8 @@
  * 8. Displaying a trusted WhatsApp CTA when purchase intent exists.
  *
  * SECURITY:
- * This component NEVER receives AI provider API keys.
- * Provider communication happens securely through /api/chat.
+ * This component NEVER receives the GROQ_API_KEY.
+ * AI provider communication happens securely through /api/chat.
  *
  * CUSTOMER JOURNEY:
  *
@@ -113,50 +113,6 @@ interface ChatApiResponse {
 
 /**
  * ================================================================
- * EXPLICIT CONVERSATION LANGUAGE DETECTION
- * ================================================================
- *
- * Language/Technology: TypeScript
- *
- * The WEBSITE language selector remains the normal source of truth. If the
- * visitor changes the site to English, the chatbot automatically works in
- * English; if the site is Portuguese, it works in Portuguese.
- *
- * This helper adds one convenience: a visitor may explicitly type a command
- * such as "speak English" or "fala português" during the conversation. We
- * only react to CLEAR language-switch commands. Short messages such as
- * "sure", "30 ml", "cheaper" or product names must never guess a new
- * language, because that caused the old PT/EN drift bug.
- */
-function detectExplicitChatLanguage(text: string): "pt" | "en" | undefined {
-  const normalized = text
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (
-    /\b(speak|reply|answer|continue|talk) (in )?english\b/.test(normalized) ||
-    /\benglish please\b/.test(normalized) ||
-    /\bin english\b/.test(normalized)
-  ) {
-    return "en";
-  }
-
-  if (
-    /\b(fala|fale|responde|responda|continua|continue) (em )?portugues\b/.test(normalized) ||
-    /\bem portugues\b/.test(normalized) ||
-    /\bportugues por favor\b/.test(normalized)
-  ) {
-    return "pt";
-  }
-
-  return undefined;
-}
-
-/**
- * ================================================================
  * CHATBOT COMPONENT
  * ================================================================
  */
@@ -207,15 +163,6 @@ export function Chatbot() {
   const [loading, setLoading] = useState(false);
 
   /**
-   * Stores the language that the CONVERSATION should use.
-   *
-   * It starts from the website language selector. This is intentionally
-   * separate from product/business context so a short follow-up such as
-   * "sure" or "one cheaper" cannot accidentally switch the AI back to PT.
-   */
-  const [chatLanguage, setChatLanguage] = useState<"pt" | "en">(language);
-
-  /**
    * Remembers the product currently being discussed during this browser
    * session. The server validates this slug against the trusted catalogue
    * before using it, so conversational references such as "esse" or a later
@@ -254,12 +201,6 @@ export function Chatbot() {
    * and future AI responses follow the currently selected language.
    */
   useEffect(() => {
-    /**
-     * The global website selector is authoritative. Changing PT <-> EN
-     * immediately updates the language used for future chatbot requests.
-     */
-    setChatLanguage(language);
-
     setMessages((currentMessages) => {
       if (
         currentMessages.length === 1 &&
@@ -334,10 +275,7 @@ export function Chatbot() {
    * Adds breathing room before a plain-text variant list and defensively
    * removes the duplicated "abaixo. abaixo." wording observed in production.
    */
-  function formatAssistantDisplayText(
-    text: string,
-    displayLanguage: "pt" | "en" = chatLanguage,
-  ): string {
+  function formatAssistantDisplayText(text: string): string {
     let formatted = text
       .replace(/abaixo\.\s*abaixo\./gi, "abaixo.")
       .replace(/(variantes?:)\s*\n(?=\s*[•-])/gi, "$1\n\n")
@@ -352,10 +290,8 @@ export function Chatbot() {
      * This changes presentation text only; it does not modify catalogue data,
      * AI reasoning, product matching or the English interface.
      */
-    if (displayLanguage === "pt") {
-      formatted = formatted
-        .replace(/\bunisex\b/gi, "unissexo")
-        .replace(/\bunissex\b/gi, "unissexo");
+    if (language === "pt") {
+      formatted = formatted.replace(/\bunisex\b/gi, "unissexo");
     }
 
     return formatted.trim();
@@ -446,7 +382,7 @@ export function Chatbot() {
       <div
         className="chat-product-recommendations"
         aria-label={
-          chatLanguage === "pt"
+          language === "pt"
             ? "Produtos recomendados"
             : "Recommended products"
         }
@@ -476,7 +412,7 @@ export function Chatbot() {
                 to={`/perfume/${product.slug}`}
                 className="chat-product-card-link"
               >
-                {chatLanguage === "pt" ? "Ver produto" : "View product"}
+                {language === "pt" ? "Ver produto" : "View product"}
                 <ExternalLink size={12} />
               </Link>
             </div>
@@ -514,19 +450,6 @@ export function Chatbot() {
     if (!clean || loading) return;
 
     /**
-     * Decide the language for THIS request before sending anything.
-     *
-     * Normal case: use the language selected on the website.
-     * Optional case: a clear in-chat command such as "speak English" may
-     * switch the conversation language. Ambiguous messages never switch it.
-     */
-    const requestLanguage = detectExplicitChatLanguage(clean) || chatLanguage;
-
-    if (requestLanguage !== chatLanguage) {
-      setChatLanguage(requestLanguage);
-    }
-
-    /**
      * Add the customer's new message to the existing conversation.
      */
     const nextMessages: ChatMessage[] = [
@@ -558,10 +481,9 @@ export function Chatbot() {
        * -------------------------------------------------------------
        *
        * IMPORTANT:
-       * The browser talks to `/api/chat`, NOT directly to an AI provider.
+       * The browser talks to `/api/chat`, NOT directly to Groq.
        *
-       * This keeps provider credentials private and lets the backend switch
-       * providers without changing this React component.
+       * This is how GROQ_API_KEY remains private.
        */
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -571,8 +493,7 @@ export function Chatbot() {
         },
 
         body: JSON.stringify({
-          // Send the persistent conversation language, not a guess from text.
-          language: requestLanguage,
+          language,
           activeProductSlug,
 
           /**
@@ -616,20 +537,7 @@ export function Chatbot() {
        *     ↓
        * WhatsApp CTA
        */
-      /**
-       * Keep the trusted server-resolved product as session context.
-       * This is deliberately separate from the visible AI text.
-       */
-      if (data.activeProductSlug && findProduct(data.activeProductSlug)) {
-        setActiveProductSlug(data.activeProductSlug);
-      } else if (data.action?.productSlug && findProduct(data.action.productSlug)) {
-        setActiveProductSlug(data.action.productSlug);
-      }
-
-      const displayReply = formatAssistantDisplayText(
-        data.reply!.trim(),
-        requestLanguage,
-      );
+      const displayReply = formatAssistantDisplayText(data.reply!.trim());
 
       /**
        * Visual recommendations are intentionally suppressed on purchase
@@ -639,6 +547,29 @@ export function Chatbot() {
       const suggestedProducts = data.action
         ? []
         : findSuggestedProducts(displayReply);
+
+      /**
+       * Keep the most recently focused catalogue product as session context.
+       *
+       * A normal AI response can introduce a NEW product that was not present
+       * in the request sent to /api/chat. In that case the server can only
+       * return the product that was active BEFORE generation. The visual-card
+       * matcher, however, resolves the finished assistant reply against the
+       * trusted local catalogue. When exactly one focused product is resolved,
+       * it is therefore the newest and strongest context for follow-ups such as
+       * "it", "that one", "esse" and "esse perfume".
+       *
+       * This also means a temporary AI/rate-limit response cannot make the
+       * conversation jump back to an older perfume: the focused product remains
+       * stored in React state until another trusted product replaces it.
+       */
+      if (suggestedProducts.length === 1) {
+        setActiveProductSlug(suggestedProducts[0].slug);
+      } else if (data.activeProductSlug && findProduct(data.activeProductSlug)) {
+        setActiveProductSlug(data.activeProductSlug);
+      } else if (data.action?.productSlug && findProduct(data.action.productSlug)) {
+        setActiveProductSlug(data.action.productSlug);
+      }
 
       setMessages((currentMessages) => [
         ...currentMessages,
@@ -673,7 +604,7 @@ export function Chatbot() {
         ...currentMessages,
         {
           role: "assistant",
-          content: localChatReply(clean, requestLanguage),
+          content: localChatReply(clean, language),
         },
       ]);
     } finally {
@@ -719,13 +650,13 @@ export function Chatbot() {
     /**
      * whatsapp.ts creates the trusted wa.me URL using storeConfig.
      */
-    const url = chatbotWhatsAppUrl(chatLanguage, product);
+    const url = chatbotWhatsAppUrl(language, product);
 
     /**
      * The visible button label follows the current interface language.
      */
     const label =
-      chatLanguage === "pt" ? "Continuar no WhatsApp" : "Continue on WhatsApp";
+      language === "pt" ? "Continuar no WhatsApp" : "Continue on WhatsApp";
 
     return (
       <a
@@ -845,7 +776,7 @@ export function Chatbot() {
           <div
             className="chat-quick-actions"
             aria-label={
-              chatLanguage === "pt"
+              language === "pt"
                 ? "Sugestões de perguntas — deslize horizontalmente para ver mais"
                 : "Suggested questions — swipe horizontally to see more"
             }
@@ -917,7 +848,7 @@ export function Chatbot() {
         {open ? <X size={22} /> : <MessageCircle size={23} />}
 
         {!open && (
-          <span>{chatLanguage === "pt" ? "Precisa de ajuda?" : "Need help?"}</span>
+          <span>{language === "pt" ? "Precisa de ajuda?" : "Need help?"}</span>
         )}
       </button>
     </div>
