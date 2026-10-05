@@ -53,7 +53,6 @@ import { perfumes } from "../../data/perfumes";
 import type { Perfume } from "../../types/perfume";
 import { Link } from "react-router-dom";
 
-
 /**
  * ================================================================
  * CHAT TYPES
@@ -382,25 +381,28 @@ export function Chatbot() {
       <div
         className="chat-product-recommendations"
         aria-label={
-          language === "pt"
-            ? "Produtos recomendados"
-            : "Recommended products"
+          language === "pt" ? "Produtos recomendados" : "Recommended products"
         }
       >
         {products.map((product) => (
           <article className="chat-product-card" key={product.slug}>
-            <img
-              src={product.image}
-              alt={product.name}
-              loading="lazy"
-            />
+            <img src={product.image} alt={product.name} loading="lazy" />
 
             <div className="chat-product-card-content">
               <span className="chat-product-card-brand">{product.brand}</span>
               <strong>{product.name}</strong>
 
               <div className="chat-product-card-meta">
-                <span>{product.size}</span>
+                {/*
+                 * Catalogue size values are stored in Portuguese.
+                 * Translate the unconfirmed-size placeholder only for the English UI
+                 * while preserving the original catalogue data.
+                 */}
+                <span>
+                  {language === "en" && product.size === "Tamanho a confirmar"
+                    ? "Size to be confirmed"
+                    : product.size}
+                </span>
                 <span>{product.price.toLocaleString("pt-PT")} Kz</span>
               </div>
 
@@ -421,7 +423,6 @@ export function Chatbot() {
       </div>
     );
   }
-
 
   /**
    * ================================================================
@@ -565,9 +566,15 @@ export function Chatbot() {
        */
       if (suggestedProducts.length === 1) {
         setActiveProductSlug(suggestedProducts[0].slug);
-      } else if (data.activeProductSlug && findProduct(data.activeProductSlug)) {
+      } else if (
+        data.activeProductSlug &&
+        findProduct(data.activeProductSlug)
+      ) {
         setActiveProductSlug(data.activeProductSlug);
-      } else if (data.action?.productSlug && findProduct(data.action.productSlug)) {
+      } else if (
+        data.action?.productSlug &&
+        findProduct(data.action.productSlug)
+      ) {
         setActiveProductSlug(data.action.productSlug);
       }
 
