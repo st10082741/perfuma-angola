@@ -26,6 +26,16 @@ export default function handler(request: any, response: any) {
   const host = String(request.headers.host || "");
   const origin = `${protocol}://${host}`;
   const productUrl = `${origin}/perfume/${product.slug}`;
+
+  /*
+   * Keep each localized social-preview URL as its own Open Graph identity.
+   * Portuguese and English share pages contain different localized metadata,
+   * while human visitors are still redirected to the same product page.
+   */
+  const shareUrl = `${origin}/api/share?slug=${encodeURIComponent(
+    product.slug,
+  )}&lang=${language}`;
+
   const imageUrl = `${origin}${product.image}`;
   const title = `${product.name} — Perfuma Angola`;
   const description = product.shortDescription[language];
@@ -47,7 +57,7 @@ export default function handler(request: any, response: any) {
 <meta property="og:title" content="${escapeHtml(title)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
 <meta property="og:image" content="${escapeHtml(imageUrl)}" />
-<meta property="og:url" content="${escapeHtml(productUrl)}" />
+<meta property="og:url" content="${escapeHtml(shareUrl)}" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="canonical" href="${escapeHtml(productUrl)}" />
 <meta http-equiv="refresh" content="0;url=${escapeHtml(productUrl)}" />
