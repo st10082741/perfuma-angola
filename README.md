@@ -334,40 +334,40 @@ The important principle is:
 
 ---
 
-# 🔮 Future AI Provider Expansion
+# 🔄 AI Provider Fallback & Resilience
 
-The provider-independent architecture creates room for additional AI providers later.
-
-For example:
-
-```text
-AIProvider
-   ├── Groq
-   ├── Future Provider A
-   └── Future Provider B
-```
-
-A future reliability architecture could become:
+Perfuma Angola uses a provider-independent AI architecture with two server-side AI paths:
 
 ```text
 Perfuma Angola Chatbot
         ↓
-AI Provider Interface
+api/chat.ts
+        ↓
+Provider-Independent AI Layer
         ↓
 Primary Provider — Groq
-        ↓
-Provider failure / rate limit
-        ↓
-Future Backup Provider
+        ↓ qualifying provider failure
+Backup Provider — Cloudflare Workers AI
+
+**Groq is the primary AI provider**, while **Cloudflare Workers AI is configured as the automatic backup provider**.
+
+The provider selection is controlled through server-side environment configuration:
+
+```env
+AI_PROVIDER=groq
+AI_FALLBACK_PROVIDER=cloudflare
 ```
+The Cloudflare adapter currently uses the Workers AI model:
 
-**Automatic provider failover is not currently implemented.**
+@cf/zai-org/glm-4.7-flash
 
-The architecture only makes it easier to introduce later without rewriting the core chatbot.
+Both providers operate behind the same application-owned AIProvider contract.
 
-A future backup provider should activate because of a genuine technical failure, rate limit or unusable provider response—not simply because one provider produced wording that was not preferred.
+The external AI providers are responsible for language-model inference, while Perfuma Angola continues to control catalogue data, product and price accuracy, conversation context, purchase rules, sold-out protection, verified business information and WhatsApp actions.
 
-Even if all AI providers were unavailable, deterministic Perfuma Angola business logic can still remain separate from the external language-model layer.
+The fallback is intentionally controlled. When the primary provider experiences a qualifying technical failure or becomes unavailable, the same provider-neutral request can be passed to the configured backup provider.
+
+This improves chatbot resilience without coupling Perfuma Angola's business logic to a single external AI vendor.
 
 ---
 
@@ -656,6 +656,16 @@ A future version could explore fine-tuning if a genuine business requirement jus
 
 ---
 
+# 🧭 Chat-to-Product Navigation
+
+When a customer selects **Ver produto / View product** from a chatbot product recommendation, the chatbot closes before navigating to the existing product-detail page.
+
+The current chatbot conversation and active product context remain preserved for the session. This allows the customer to browse the product and reopen the chatbot without unnecessarily restarting the conversation.
+
+This behaviour is handled by the chatbot interface and remains separate from the AI provider layer.
+
+---
+
 # 📱 Responsive Design
 
 The interface was designed to adapt across:
@@ -666,6 +676,15 @@ The interface was designed to adapt across:
 - Smartphones
 
 The visual identity uses a luxury-inspired combination of elegant typography, warm neutral tones, refined spacing and subtle interactions.
+
+## Route Scroll Restoration
+
+Client-side route changes use the centralized `ScrollToTop` layout helper so that a newly opened page begins at the top instead of inheriting the scroll position of the previous page.
+
+This is particularly useful when customers navigate from the catalogue or chatbot recommendations to product-detail pages.
+
+The behaviour is implemented centrally rather than duplicated across individual pages.
+
 
 ---
 
@@ -679,8 +698,10 @@ The visual identity uses a luxury-inspired combination of elegant typography, wa
 | **CSS3** | Custom responsive and luxury-inspired styling |
 | **React Router DOM** | Client-side navigation and product routes |
 | **Lucide React** | Interface icons |
-| **Groq API** | Current external AI provider |
-| **GPT-OSS** | Language model currently used by the assistant |
+| **Groq API** | Primary external AI provider |
+| **Cloudflare Workers AI** | Automatic backup AI provider |
+| **GPT-OSS** | Language model used through the primary Groq provider |
+| **GLM-4.7-Flash** | Language model used through the Cloudflare Workers AI fallback |
 | **Vercel Functions** | Server-side API functionality |
 | **Open Graph** | Rich product-sharing metadata |
 | **WhatsApp** | Direct customer ordering and human handoff |
@@ -775,6 +796,14 @@ Selects the configured AI provider and provides the provider-independent entry p
 ### `api/ai/providers/groq.ts`
 
 Contains the current Groq-specific implementation.
+
+### `api/ai/providers/cloudflare.ts`
+
+Implements the Cloudflare Workers AI provider adapter used as the backup AI path.
+
+It converts the application's provider-independent AI request into the Cloudflare Workers AI request format and converts the provider response back into the shared AI result expected by the chatbot.
+
+Provider selection and fallback orchestration remain outside the customer-facing React interface.
 
 ### `api/share.ts`
 
@@ -880,6 +909,16 @@ Current value:
 
 ```env
 AI_PROVIDER=groq
+```
+
+### `AI_FALLBACK_PROVIDER`
+
+Selects the optional backup AI provider used when the primary provider experiences a qualifying provider-level failure.
+
+Current value:
+
+```env
+AI_FALLBACK_PROVIDER=cloudflare
 ```
 
 ### `GROQ_API_KEY`
@@ -1503,6 +1542,13 @@ Important checks include:
 - WhatsApp button
 - Correct WhatsApp language
 - Correct WhatsApp product context
+- Product-card navigation closes the chatbot overlay correctly
+- Chat conversation and active product context remain available after product navigation
+- Newly opened routes start at the top of the page
+- Groq works correctly as the primary AI provider
+- Cloudflare Workers AI can handle chatbot requests when the primary provider is unavailable
+- Provider fallback preserves catalogue grounding, bilingual behaviour and product recommendations
+
 
 Testing the full journey matters because a chatbot may answer one isolated message correctly while losing the product context several messages later.
 
@@ -1536,6 +1582,11 @@ The project introduced hands-on experience with:
 - API-key protection
 - Provider rate limits
 - Provider-independent AI architecture
+- Multi-provider AI fallback architecture
+- Cloudflare Workers AI integration
+- AI provider failure handling
+- Chat-to-product navigation UX
+- Centralized client-side scroll restoration
 - Git version control
 - Git staging
 - Git commits
@@ -1613,8 +1664,8 @@ The architecture leaves room for future development such as:
 - Payment gateway integration
 - Analytics and reporting
 - Customer order history
-- Additional AI providers
-- AI provider failover
+- Additional AI provider integrations
+- More advanced provider health monitoring and failover strategies
 - Additional catalogue-management tools
 
 These capabilities can be introduced as the platform and business requirements grow.

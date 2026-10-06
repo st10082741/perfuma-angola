@@ -413,6 +413,9 @@ export function Chatbot() {
               <Link
                 to={`/perfume/${product.slug}`}
                 className="chat-product-card-link"
+                // Close the panel before navigating so the product page is immediately visible.
+                // The conversation state remains intact if the customer reopens the chatbot.
+                onClick={() => setOpen(false)}
               >
                 {language === "pt" ? "Ver produto" : "View product"}
                 <ExternalLink size={12} />
