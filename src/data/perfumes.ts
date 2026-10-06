@@ -172,7 +172,7 @@ export const perfumes: Perfume[] = [
     slug: "hushed-nightfall",
     name: "Hushed Nightfall",
     brand: "Miss Smoo",
-    price: 3000,
+    price: 30000,
     size: "100 ml",
     concentration: "Eau de Parfum",
     category: "Women",
