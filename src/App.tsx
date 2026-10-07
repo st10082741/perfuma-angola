@@ -7,6 +7,7 @@ import { Shop } from "./pages/Shop";
 import { ProductDetails } from "./pages/ProductDetails";
 import { About } from "./pages/About";
 import { Contact } from "./pages/Contact";
+import { SEOManager } from "./components/seo/SEOManager";
 
 /**
  * Global application shell.
@@ -16,6 +17,7 @@ import { Contact } from "./pages/Contact";
 export default function App() {
   return (
     <>
+      <SEOManager />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

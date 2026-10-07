@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ================================================================
+  PERFUMA ANGOLA - XML SITEMAP
+  ================================================================
+
+  Language / Technology:
+  XML (Extensible Markup Language)
+  Sitemap Protocol
+
+  PURPOSE:
+  This file provides search engines such as Google with a structured
+  list of the important public pages available on Perfuma Angola.
+
+  Search engines can use this sitemap to discover and crawl:
+  - the homepage;
+  - the perfume catalogue;
+  - informational pages;
+  - individual perfume product pages.
+
+  IMPORTANT:
+  A sitemap helps search engines discover website pages, but inclusion
+  in this file does not by itself guarantee indexing or search ranking.
+
+  MAINTENANCE:
+  When a perfume is permanently added to or removed from the catalogue,
+  its /perfume/{slug} URL should also be added to or removed from this
+  sitemap.
+
+  Canonical domain:
+  https://perfuma-angola.com
+  ================================================================
+-->
+
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://perfuma-angola.com/</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/shop</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/about</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/contact</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/asad-elixir</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/khamrah-dukhan</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/ramz-lattafa-gold</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/ramz-lattafa-silver</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/ramz-lattafa-30ml</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/hushed-nightfall</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/sweet-treat-signature</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/perfuma-oil-no-1</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/perfuma-oil-no-2</loc>
+  </url>
+
+  <url>
+    <loc>https://perfuma-angola.com/perfume/asad-onlyou</loc>
+  </url>
+</urlset>

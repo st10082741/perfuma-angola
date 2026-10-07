@@ -31,9 +31,10 @@ export const storeConfig = {
   currency: "Kz",
   locale: "pt-AO",
 
-  // Used after deployment to create share links. In development the browser
-  // automatically falls back to localhost.
-  siteUrl: import.meta.env.VITE_SITE_URL || "",
+  // Official public domain used for canonical URLs, SEO metadata and share links.
+  // Keeping it centralized prevents different parts of the app from publishing
+  // conflicting website addresses.
+  siteUrl: import.meta.env.VITE_SITE_URL || "https://perfuma-angola.com",
 
   // Business facts confirmed by the owners.
   owners: ["Miguel Almeida", "Victor Sumbo"],

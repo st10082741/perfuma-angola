@@ -1,0 +1,12 @@
+# Perfuma Angola - Search Engine Crawler Rules
+#
+# Language / Technology:
+# Robots Exclusion Protocol (robots.txt)
+#
+# This file allows legitimate search-engine crawlers to access the
+# public website and tells them where to find the XML sitemap.
+
+User-agent: *
+Allow: /
+
+Sitemap: https://perfuma-angola.com/sitemap.xml
