@@ -118,14 +118,14 @@ export function productShareUrl(product: Perfume, language: Language): string {
 function generalWhatsAppMessage(language: Language): string {
   if (language === "en") {
     return [
-      "Hello Perfuma Angola 👋",
+      "Hello Perfuma Angola",
       "",
       "I would like to know more about your fragrances.",
     ].join("\n");
   }
 
   return [
-    "Olá Perfuma Angola 👋",
+    "Olá Perfuma Angola",
     "",
     "Gostaria de saber mais sobre os vossos perfumes.",
   ].join("\n");
@@ -159,14 +159,14 @@ function productOrderMessage(product: Perfume, language: Language): string {
 
   if (language === "en") {
     return [
-      "Hello Perfuma Angola 👋",
+      "Hello Perfuma Angola",
       "",
       "I would like to order:",
       "",
-      `✨ ${product.name}`,
-      `🏷️ ${product.brand}`,
-      `📦 ${product.size}`,
-      `💰 ${price}`,
+      `${product.name}`,
+      `${product.brand}`,
+      `${product.size}`,
+      `${price}`,
       "",
       "Product:",
       shareUrl,
@@ -176,14 +176,14 @@ function productOrderMessage(product: Perfume, language: Language): string {
   }
 
   return [
-    "Olá Perfuma Angola 👋",
+    "Olá Perfuma Angola",
     "",
     "Gostaria de encomendar:",
     "",
-    `✨ ${product.name}`,
-    `🏷️ ${product.brand}`,
-    `📦 ${product.size}`,
-    `💰 ${price}`,
+      `${product.name}`,
+      `${product.brand}`,
+      `${product.size}`,
+      `${price}`,
     "",
     "Produto:",
     shareUrl,
@@ -218,14 +218,14 @@ function aiContinuationMessage(language: Language, product?: Perfume): string {
 
     if (language === "en") {
       return [
-        "Hello Perfuma Angola 👋",
+        "Hello Perfuma Angola",
         "",
         "I was speaking with your virtual assistant and I am interested in:",
         "",
-        `✨ ${product.name}`,
-        `🏷️ ${product.brand}`,
-        `📦 ${product.size}`,
-        `💰 ${price}`,
+        `${product.name}`,
+        `${product.brand}`,
+        `${product.size}`,
+        `${price}`,
         "",
         "Product:",
         shareUrl,
@@ -235,14 +235,14 @@ function aiContinuationMessage(language: Language, product?: Perfume): string {
     }
 
     return [
-      "Olá Perfuma Angola 👋",
+      "Olá Perfuma Angola",
       "",
       "Estive a falar com o vosso assistente virtual e tenho interesse em:",
       "",
-      `✨ ${product.name}`,
-      `🏷️ ${product.brand}`,
-      `📦 ${product.size}`,
-      `💰 ${price}`,
+      `${product.name}`,
+      `${product.brand}`,
+      `${product.size}`,
+      `${price}`,
       "",
       "Produto:",
       shareUrl,
@@ -265,7 +265,7 @@ function aiContinuationMessage(language: Language, product?: Perfume): string {
    */
   if (language === "en") {
     return [
-      "Hello Perfuma Angola 👋",
+      "Hello Perfuma Angola",
       "",
       "I was speaking with your virtual assistant and would like to continue with my purchase.",
       "",
@@ -274,7 +274,7 @@ function aiContinuationMessage(language: Language, product?: Perfume): string {
   }
 
   return [
-    "Olá Perfuma Angola 👋",
+    "Olá Perfuma Angola",
     "",
     "Estive a falar com o vosso assistente virtual e gostaria de continuar com a minha compra.",
     "",
